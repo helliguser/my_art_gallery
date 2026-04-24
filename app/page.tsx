@@ -92,8 +92,12 @@ export default async function HomePage() {
           const authorName = profile?.full_name || profile?.username || 'Anonymous'
           return (
             <div key={post.id} style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', padding: '0.5rem' }}>
-              <img src={post.image_url} alt={post.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
-              <p style={{ textAlign: 'center', marginTop: '0.5rem' }}>{post.title}</p>
+              <Link href={`/post/${post.id}`} style={{ display: 'block' }}>
+                <img src={post.image_url} alt={post.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
+              </Link>
+              <Link href={`/post/${post.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <p style={{ textAlign: 'center', marginTop: '0.5rem' }}>{post.title}</p>
+              </Link>
               <small style={{ display: 'block', textAlign: 'center' }}>
                 by{' '}
                 <Link href={`/user/${post.user_id}`} style={{ textDecoration: 'none', color: '#0070f3' }}>
