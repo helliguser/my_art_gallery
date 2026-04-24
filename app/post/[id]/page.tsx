@@ -11,7 +11,9 @@ async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return cookieStore.getAll() },
+        getAll() {
+          return cookieStore.getAll()
+        },
         setAll() {},
       },
     }
@@ -26,7 +28,6 @@ export default async function PostPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
 
-  // Получаем пост + данные автора (profiles)
   const { data: post, error } = await supabase
     .from('posts')
     .select('*, profiles(id, username, full_name)')
@@ -37,7 +38,6 @@ export default async function PostPage({ params }: PageProps) {
     notFound()
   }
 
-  // Проверяем, залогинен ли пользователь и является ли автором
   const { data: { session } } = await supabase.auth.getSession()
   const isAuthor = session?.user?.id === post.user_id
 
@@ -45,7 +45,9 @@ export default async function PostPage({ params }: PageProps) {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <Link href="/">← Back to Gallery</Link>
+      <Link href="/" style={{ textDecoration: 'none', color: '#0070f3' }}>
+        ← Back to Gallery
+      </Link>
 
       <div style={{ marginTop: '1rem' }}>
         <img
@@ -55,7 +57,7 @@ export default async function PostPage({ params }: PageProps) {
         />
         <h1>{post.title}</h1>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
           <p>
             by{' '}
             <Link href={`/user/${post.user_id}`} style={{ textDecoration: 'none', color: '#0070f3' }}>
@@ -64,7 +66,8 @@ export default async function PostPage({ params }: PageProps) {
             {' '} on {new Date(post.created_at).toLocaleDateString()}
           </p>
 
-          {isAuthor && (
+          {/* Исправлено: добавили проверку session && */}
+          {isAuthor && session && (
             <div>
               <button
                 style={{
@@ -80,8 +83,7 @@ export default async function PostPage({ params }: PageProps) {
               >
                 Edit
               </button>
-              {/* session существует, потому что isAuthor истинно, используем ! для TypeScript */}
-              <DeleteButton postId={post.id} userId={session!.user.id} />
+              <DeleteButton postId={post.id} userId={session.user.id} />
             </div>
           )}
         </div>
