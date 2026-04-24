@@ -18,8 +18,7 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // Это произойдёт, если метод вызван в Server Component
-            // Во время middleware мы можем игнорировать эту ошибку
+            // Игнорируем ошибки в middleware
           }
         },
       },

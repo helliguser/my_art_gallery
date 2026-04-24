@@ -1,62 +1,68 @@
-import { createClient } from '@supabase/supabase-js';
-import Link from 'next/link';
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import Link from 'next/link'
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+async function createClient() {
+  const cookieStore = await cookies()
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll() {},
+      },
+    }
+  )
+}
 
 type Post = {
-  id: number;
-  title: string;
-  image_url: string;
-  created_at: string;
-  user_id: string;
-};
+  id: number
+  title: string
+  image_url: string
+  created_at: string
+  user_id: string
+}
 
 type Profile = {
-  id: string;
-  username: string;
-  full_name: string | null;
-  avatar_url: string | null;
-  bio: string | null;
-};
+  id: string
+  username: string
+  full_name: string | null
+  avatar_url: string | null
+  bio: string | null
+}
 
 export default async function HomePage() {
-  // 1. Получаем все посты
+  const supabase = await createClient()
+
+  // Проверяем, залогинен ли пользователь
+  const { data: { session } } = await supabase.auth.getSession()
+  const isLoggedIn = !!session
+
+  // Загружаем посты
   const { data: posts, error } = await supabase
     .from('posts')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
 
   if (error) {
-    console.error(error);
-    return <div style={{ padding: '2rem' }}>Error loading images: {error.message}</div>;
+    return <div style={{ padding: '2rem' }}>Error loading images: {error.message}</div>
   }
 
-  // 2. Собираем уникальные user_id из постов
-  const userIds = [...new Set((posts as Post[]).map(p => p.user_id).filter(Boolean))];
-
-  // 3. Загружаем профили авторов
-  let profilesMap: Record<string, Profile> = {};
+  // Загружаем профили авторов
+  const userIds = [...new Set((posts as Post[]).map(p => p.user_id).filter(Boolean))]
+  let profilesMap: Record<string, Profile> = {}
   if (userIds.length) {
-    const { data: profiles, error: profilesError } = await supabase
+    const { data: profiles } = await supabase
       .from('profiles')
       .select('id, username, full_name, avatar_url, bio')
-      .in('id', userIds);
-    if (profilesError) {
-      console.error(profilesError);
-    } else if (profiles) {
-      profilesMap = Object.fromEntries(profiles.map(p => [p.id, p]));
+      .in('id', userIds)
+    if (profiles) {
+      profilesMap = Object.fromEntries(profiles.map(p => [p.id, p]))
     }
   }
-
-  // 4. Проверяем, залогинен ли текущий пользователь (для отображения разных кнопок)
-  // Для этого используем серверный метод получения сессии (работает в серверных компонентах)
-  const { data: { session } } = await supabase.auth.getSession();
-  const isLoggedIn = !!session;
 
   return (
     <div style={{ padding: '2rem' }}>
@@ -81,9 +87,9 @@ export default async function HomePage() {
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
-        {(posts as Post[]).map((post) => {
-          const profile = profilesMap[post.user_id];
-          const authorName = profile?.full_name || profile?.username || 'Anonymous';
+        {(posts as Post[]).map(post => {
+          const profile = profilesMap[post.user_id]
+          const authorName = profile?.full_name || profile?.username || 'Anonymous'
           return (
             <div key={post.id} style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', padding: '0.5rem' }}>
               <img src={post.image_url} alt={post.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
@@ -95,12 +101,10 @@ export default async function HomePage() {
                 </Link>
               </small>
             </div>
-          );
+          )
         })}
       </div>
-      {(!posts || posts.length === 0) && (
-        <p style={{ textAlign: 'center' }}>No artworks yet. Be the first to upload!</p>
-      )}
+      {(!posts || posts.length === 0) && <p style={{ textAlign: 'center' }}>No artworks yet. Be the first to upload!</p>}
     </div>
-  );
+  )
 }
