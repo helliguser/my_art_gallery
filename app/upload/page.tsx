@@ -1,60 +1,74 @@
 'use client';
-import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import Link from 'next/link';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function UploadPage() {
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const [user, setUser] = useState<any>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) router.push('/login');
+      else setUser(session.user);
+    });
+  }, [router]);
 
   async function handleUpload() {
-    if (!file) return;
+    if (!file || !user) return;
     setUploading(true);
-    
+
     const fileName = Date.now() + '_' + file.name;
-    const { error } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('images')
       .upload(fileName, file);
-    
-    if (error) {
-      alert('Upload error: ' + error.message);
+
+    if (uploadError) {
+      alert('Upload error: ' + uploadError.message);
       setUploading(false);
       return;
     }
-    
+
     const { data: { publicUrl } } = supabase.storage
       .from('images')
       .getPublicUrl(fileName);
-    
-    await supabase.from('posts').insert([
-      { title: title, image_url: publicUrl }
+
+    const { error: insertError } = await supabase.from('posts').insert([
+      { title, image_url: publicUrl, user_id: user.id }
     ]);
-    
+
+    if (insertError) {
+      alert('Database error: ' + insertError.message);
+      setUploading(false);
+      return;
+    }
+
     setImageUrl(publicUrl);
     setUploading(false);
     alert('Artwork published!');
   }
-  
+
+  if (!user) return <div style={{ padding: '2rem' }}>Loading... or redirecting to login...</div>;
+
   return (
     <div style={{ padding: '2rem' }}>
       <Link href="/">← Back to Gallery</Link>
       <h1>Upload New Artwork</h1>
-      <input 
-        type="text" 
-        placeholder="Title of your work" 
+      <input
+        type="text"
+        placeholder="Title of your work"
         value={title}
         onChange={e => setTitle(e.target.value)}
         style={{ display: 'block', marginBottom: '1rem', width: '300px', padding: '0.5rem' }}
       />
-      <input 
-        type="file" 
+      <input
+        type="file"
         accept="image/*"
         onChange={e => setFile(e.target.files?.[0] || null)}
         style={{ marginBottom: '1rem', display: 'block' }}
