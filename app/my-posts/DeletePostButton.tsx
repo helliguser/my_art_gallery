@@ -9,12 +9,12 @@ export default function DeletePostButton({ postId }: { postId: number }) {
   const handleDelete = async () => {
     if (!confirm('Are you sure? This will permanently delete the artwork and all its comments.')) return;
     const { error } = await supabase.from('posts').delete().eq('id', postId);
-    if (error) alert('Error deleting: ' + error.message);
+    if (error) alert('Error: ' + error.message);
     else router.refresh();
   };
 
   return (
-    <button onClick={handleDelete} className="btn btn-danger" style={{ fontSize: '0.8rem' }}>
+    <button onClick={handleDelete} className="btn btn-danger">
       Delete
     </button>
   );

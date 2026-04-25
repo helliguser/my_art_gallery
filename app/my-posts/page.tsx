@@ -34,8 +34,8 @@ export default async function MyPostsPage() {
               </Link>
               <div className="card-content">
                 <div className="card-title">{post.title}</div>
-                <div className="card-actions" style={{ justifyContent: 'space-between', display: 'flex', gap: '0.5rem' }}>
-                  <Link href={`/post/${post.id}/edit`} className="btn btn-secondary" style={{ fontSize: '0.8rem' }}>Edit</Link>
+                <div className="card-actions" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'space-between' }}>
+                  <Link href={`/post/${post.id}/edit`} className="btn btn-secondary">Edit</Link>
                   <DeletePostButton postId={post.id} />
                 </div>
               </div>

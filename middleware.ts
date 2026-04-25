@@ -27,6 +27,7 @@ export async function middleware(request: NextRequest) {
 
   const { data: { session } } = await supabase.auth.getSession()
 
+  // Защищённые маршруты
   const protectedRoutes = ['/profile', '/upload', '/my-posts']
   const isProtected = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))
   const isEditRoute = /\/post\/\d+\/edit/.test(request.nextUrl.pathname)

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase/supabase';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 type Comment = {
   id: number;
@@ -37,7 +37,6 @@ export default function Comments({ postId }: { postId: number }) {
   }, [postId]);
 
   const fetchComments = async () => {
-    // Загружаем комментарии без join
     const { data, error } = await supabase
       .from('comments')
       .select('*')
@@ -52,7 +51,6 @@ export default function Comments({ postId }: { postId: number }) {
 
     setComments(data || []);
 
-    // Если есть комментарии, загружаем имена авторов отдельно
     if (data && data.length > 0) {
       const userIds = [...new Set(data.map(c => c.user_id).filter(Boolean))];
       if (userIds.length) {
@@ -76,13 +74,16 @@ export default function Comments({ postId }: { postId: number }) {
     e.preventDefault();
     if (!newComment.trim() || !userId) return;
     setSubmitting(true);
-    const { error } = await supabase.from('comments').insert({
-      content: newComment.trim(),
-      post_id: postId,
-      user_id: userId,
-    });
-    if (error) alert('Error: ' + error.message);
-    else {
+    const { error } = await supabase
+      .from('comments')
+      .insert({
+        content: newComment.trim(),
+        post_id: postId,
+        user_id: userId,
+      });
+    if (error) {
+      alert('Error: ' + error.message);
+    } else {
       setNewComment('');
       fetchComments();
     }
@@ -96,8 +97,11 @@ export default function Comments({ postId }: { postId: number }) {
     }
     if (!confirm('Delete this comment?')) return;
     const { error } = await supabase.from('comments').delete().eq('id', commentId);
-    if (error) alert('Error: ' + error.message);
-    else fetchComments();
+    if (error) {
+      alert('Error: ' + error.message);
+    } else {
+      fetchComments();
+    }
   };
 
   if (loading) return <div>Loading comments...</div>;
@@ -114,37 +118,53 @@ export default function Comments({ postId }: { postId: number }) {
             rows={3}
             style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
           />
-          <button type="submit" disabled={submitting} className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="btn btn-primary"
+            style={{ marginTop: '0.5rem' }}
+          >
             {submitting ? 'Posting...' : 'Post Comment'}
           </button>
         </form>
       ) : (
-        <p><a href="/login" style={{ color: '#0070f3' }}>Sign in</a> to comment.</p>
+        <p>
+          <a href="/login" style={{ color: '#0070f3' }}>Sign in</a> to comment.
+        </p>
       )}
-      <div>
-        {comments.map(comment => {
-          const canDelete = userId && (userId === comment.user_id || userId === postAuthorId);
-          const authorName = userNames[comment.user_id] || comment.user_id?.slice(0, 6) || 'User';
-          return (
-            <div key={comment.id} style={{ borderBottom: '1px solid #eee', padding: '0.75rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-              <div style={{ flex: 1 }}>
-                <b>{authorName}</b>
-                <small style={{ marginLeft: '0.5rem', color: '#666' }}>{new Date(comment.created_at).toLocaleString()}</small>
-                <p style={{ marginTop: '0.25rem' }}>{comment.content}</p>
-              </div>
-              {canDelete && (
-                <button
-                  onClick={() => handleDelete(comment.id, comment.user_id)}
-                  style={{ background: 'none', border: 'none', color: '#f44336', cursor: 'pointer', fontSize: '1rem' }}
-                  aria-label="Delete comment"
-                >
-                  🗑️
-                </button>
-              )}
+      {comments.map((comment) => {
+        const canDelete = userId && (userId === comment.user_id || userId === postAuthorId);
+        const authorName = userNames[comment.user_id] || comment.user_id?.slice(0, 6) || 'User';
+        return (
+          <div
+            key={comment.id}
+            style={{
+              borderBottom: '1px solid #eee',
+              padding: '0.75rem 0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'start',
+            }}
+          >
+            <div>
+              <b>{authorName}</b>
+              <small style={{ marginLeft: '0.5rem', color: '#666' }}>
+                {new Date(comment.created_at).toLocaleString()}
+              </small>
+              <p style={{ marginTop: '0.25rem' }}>{comment.content}</p>
             </div>
-          );
-        })}
-      </div>
+            {canDelete && (
+              <button
+                onClick={() => handleDelete(comment.id, comment.user_id)}
+                style={{ background: 'none', border: 'none', color: '#f44336', cursor: 'pointer' }}
+                aria-label="Delete comment"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

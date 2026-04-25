@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase/supabase';
 
 export default function LikeButton({ postId, initialLikes }: { postId: number; initialLikes: number }) {
   const [likes, setLikes] = useState(initialLikes);

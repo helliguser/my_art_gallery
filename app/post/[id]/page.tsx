@@ -1,29 +1,10 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import Link from 'next/link';
+import { createClient } from '@/lib/supabase-server';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import Comments from './Comments';
 import LikeButton from '@/components/LikeButton';
 
-async function createClient() {
-  const cookieStore = await cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll() {},
-      },
-    }
-  );
-}
-
-type PageProps = {
-  params: Promise<{ id: string }>;
-};
-
-export default async function PostPage({ params }: PageProps) {
+export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
 
@@ -35,7 +16,6 @@ export default async function PostPage({ params }: PageProps) {
 
   if (error || !post) notFound();
 
-  // Получаем автора поста
   let authorName = 'Anonymous';
   if (post.user_id) {
     const { data: profile } = await supabase
@@ -46,7 +26,6 @@ export default async function PostPage({ params }: PageProps) {
     if (profile) authorName = profile.full_name || profile.username || 'Anonymous';
   }
 
-  // Проверяем, является ли текущий пользователь автором
   const { data: { session } } = await supabase.auth.getSession();
   const isAuthor = session?.user?.id === post.user_id;
 
@@ -57,7 +36,7 @@ export default async function PostPage({ params }: PageProps) {
         <h1 className="post-title">{post.title}</h1>
         <img src={post.image_url} alt={post.title} className="post-image" />
         <div className="post-meta">
-          <div>by {authorName}</div>
+          by {authorName}
           <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
             {isAuthor && (

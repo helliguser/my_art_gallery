@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/supabase'
 
 export default function DeleteButton({ postId, userId }: { postId: number; userId: string }) {
   const router = useRouter()
