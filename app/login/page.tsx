@@ -14,7 +14,6 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect_to') || '/';
 
-  // Если уже залогинен – сразу перенаправляем
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) router.push(redirectTo);
