@@ -27,10 +27,8 @@ export async function middleware(request: NextRequest) {
 
   const { data: { session } } = await supabase.auth.getSession()
 
-  // Защищённые маршруты
   const protectedRoutes = ['/profile', '/upload', '/my-posts']
   const isProtected = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))
-  // Редактирование поста
   const isEditRoute = /\/post\/\d+\/edit/.test(request.nextUrl.pathname)
 
   if ((isProtected || isEditRoute) && !session) {
@@ -43,5 +41,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }

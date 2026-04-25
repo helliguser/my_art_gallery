@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useState, FormEvent, ChangeEvent, useEffect } from 'react';
+import { useState, FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -14,12 +14,6 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect_to') || '/';
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.push(redirectTo);
-    });
-  }, [router, redirectTo]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,9 +30,6 @@ function LoginForm() {
     }
   }
 
-  const handleEmailChange = (e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
-  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value);
-
   return (
     <div style={{ maxWidth: '400px', margin: '2rem auto', padding: '1rem' }}>
       <h1>{isLogin ? 'Sign In' : 'Sign Up'}</h1>
@@ -47,7 +38,7 @@ function LoginForm() {
           type="email"
           placeholder="Email"
           value={email}
-          onChange={handleEmailChange}
+          onChange={(e) => setEmail(e.target.value)}
           style={{ display: 'block', width: '100%', marginBottom: '1rem', padding: '0.5rem' }}
           required
         />
@@ -55,7 +46,7 @@ function LoginForm() {
           type="password"
           placeholder="Password"
           value={password}
-          onChange={handlePasswordChange}
+          onChange={(e) => setPassword(e.target.value)}
           style={{ display: 'block', width: '100%', marginBottom: '1rem', padding: '0.5rem' }}
           required
         />

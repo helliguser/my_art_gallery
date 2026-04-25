@@ -1,27 +1,12 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import DeletePostButton from './DeletePostButton';
 
-async function createClient() {
-  const cookieStore = await cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll() {},
-      },
-    }
-  );
-}
-
 export default async function MyPostsPage() {
   const supabase = await createClient();
-
   const { data: { session } } = await supabase.auth.getSession();
+
   if (!session) redirect('/login?redirect_to=/my-posts');
 
   const { data: posts, error } = await supabase
