@@ -26,18 +26,15 @@ export default async function PostPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
 
-  // Только пост, без join
   const { data: post, error } = await supabase
     .from('posts')
     .select('*')
     .eq('id', id)
     .single()
 
-  if (error || !post) {
-    notFound()
-  }
+  if (error || !post) notFound()
 
-  // Получаем автора отдельным запросом (если есть профиль)
+  // Получаем имя автора
   let authorName = 'Anonymous'
   if (post.user_id) {
     const { data: profile } = await supabase
@@ -45,14 +42,8 @@ export default async function PostPage({ params }: PageProps) {
       .select('full_name, username')
       .eq('id', post.user_id)
       .single()
-    if (profile) {
-      authorName = profile.full_name || profile.username || 'Anonymous'
-    }
+    if (profile) authorName = profile.full_name || profile.username || 'Anonymous'
   }
-
-  // Текущий пользователь (для комментариев)
-  const { data: { session } } = await supabase.auth.getSession()
-  const currentUserId = session?.user?.id
 
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
@@ -60,9 +51,7 @@ export default async function PostPage({ params }: PageProps) {
       <h1>{post.title}</h1>
       <img src={post.image_url} alt={post.title} style={{ width: '100%', borderRadius: '8px', marginBottom: '1rem' }} />
       <p><strong>by {authorName}</strong></p>
-
-      {/* Комментарии */}
-      <Comments postId={post.id} currentUserId={currentUserId} />
+      <Comments postId={post.id} />
     </div>
   )
 }
