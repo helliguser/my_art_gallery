@@ -14,7 +14,6 @@ export default async function HomePage() {
 
   if (error) return <div className="container">Error loading gallery</div>;
 
-  // Получаем профили авторов (включая аватар)
   const userIds = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
   let profilesMap: Record<string, { full_name: string | null; username: string | null; avatar_url: string | null }> = {};
   if (userIds.length) {
@@ -47,8 +46,10 @@ export default async function HomePage() {
               </Link>
               <div className="card-content">
                 <div className="card-title">{post.title}</div>
-                <div className="card-author" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
-                  <Avatar url={profile?.avatar_url} size={24} />
+                <div className="card-author" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', flexWrap: 'wrap' }}>
+                  <div style={{ flexShrink: 0, lineHeight: 0 }}>
+                    <Avatar url={profile?.avatar_url} size={24} />
+                  </div>
                   <Link href={`/user/${post.user_id}`}>{authorName}</Link>
                 </div>
               </div>

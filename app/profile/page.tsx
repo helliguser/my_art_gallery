@@ -103,9 +103,9 @@ export default function ProfilePage() {
       <div className="container">
         <Link href="/" className="btn btn-outline">← Back</Link>
         <h1>Edit Profile</h1>
-        <div>
+        <div style={{ marginBottom: '1rem' }}>
           <label>Avatar</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
             <Avatar url={profile.avatar_url} size={80} />
             <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
             {uploadingAvatar && <span>Uploading...</span>}
@@ -114,11 +114,21 @@ export default function ProfilePage() {
         <div><label>Username: {profile.username}</label></div>
         <div style={{ marginTop: '1rem' }}>
           <label>Full Name</label>
-          <input type="text" value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }} />
+          <input
+            type="text"
+            value={form.full_name}
+            onChange={e => setForm({ ...form, full_name: e.target.value })}
+            style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
+          />
         </div>
         <div>
           <label>Bio</label>
-          <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} rows={4} style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }} />
+          <textarea
+            value={form.bio}
+            onChange={e => setForm({ ...form, bio: e.target.value })}
+            rows={4}
+            style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
+          />
         </div>
         <button onClick={handleSave} className="btn btn-primary">Save</button>
         <button onClick={() => setEditing(false)} className="btn btn-outline" style={{ marginLeft: '1rem' }}>Cancel</button>

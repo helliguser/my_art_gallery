@@ -2,14 +2,13 @@ import Image from 'next/image';
 
 export default function Avatar({ url, size = 40 }: { url?: string | null; size?: number }) {
   if (!url) {
-    // Заглушка: иконка пользователя или цветной круг
     return (
       <div
         style={{
           width: size,
           height: size,
           borderRadius: '50%',
-          background: '#ccc',
+          background: '#e0e0e0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
