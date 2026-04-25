@@ -14,17 +14,34 @@ export async function GET(request: NextRequest) {
 
   const { data: posts, error, count } = await supabase
     .from('posts')
-    .select('*, profiles(full_name, username, avatar_url)', { count: 'exact' })
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(start, end);
 
   if (error) {
-    console.error(error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Безопасно получаем уникальные user_id
+  const userIds = Array.from(new Set(posts.map(p => p.user_id).filter(Boolean)));
+  let profilesMap: Record<string, any> = {};
+  if (userIds.length) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, username, avatar_url')
+      .in('id', userIds);
+    if (profiles) {
+      profilesMap = Object.fromEntries(profiles.map(p => [p.id, p]));
+    }
+  }
+
+  const enrichedPosts = posts.map(post => ({
+    ...post,
+    profile: post.user_id ? profilesMap[post.user_id] || null : null,
+  }));
+
   return NextResponse.json({
-    posts,
+    posts: enrichedPosts,
     total: count,
     page,
     totalPages: Math.ceil((count || 0) / limit),

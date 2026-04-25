@@ -11,71 +11,49 @@ type Comment = {
   user_id: string;
 };
 
-type ProfileInfo = {
-  full_name: string | null;
-  username: string | null;
-  avatar_url: string | null;
-};
-
 export default function Comments({ postId }: { postId: number }) {
   const [comments, setComments] = useState<Comment[]>([]);
-  const [profilesMap, setProfilesMap] = useState<Record<string, ProfileInfo>>({});
+  const [authors, setAuthors] = useState<Record<string, { full_name: string | null; username: string | null; avatar_url: string | null }>>({});
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [postAuthorId, setPostAuthorId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchData() {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUserId(session?.user?.id || null);
+    supabase.auth.getSession().then(({ data: { session } }) => setUserId(session?.user?.id || null));
+  }, []);
 
-      const { data: post } = await supabase
-        .from('posts')
-        .select('user_id')
-        .eq('id', postId)
-        .single();
-      setPostAuthorId(post?.user_id || null);
-
-      await fetchComments();
-    }
-    fetchData();
-  }, [postId]);
-
-  const fetchComments = async () => {
+  const loadComments = async () => {
     const { data, error } = await supabase
       .from('comments')
       .select('*')
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
-
     if (error) {
-      console.error('Error loading comments:', error);
+      console.error(error);
       setLoading(false);
       return;
     }
-
     setComments(data || []);
 
-    if (data && data.length > 0) {
-      const userIds = [...new Set(data.map(c => c.user_id).filter(Boolean))];
-      if (userIds.length) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, username, avatar_url')
-          .in('id', userIds);
-        if (profiles) {
-          const map: Record<string, ProfileInfo> = {};
-          profiles.forEach(p => {
-            map[p.id] = { full_name: p.full_name, username: p.username, avatar_url: p.avatar_url };
-          });
-          setProfilesMap(map);
-        }
+    // Загружаем профили авторов комментариев
+    const userIds = [...new Set(data.map(c => c.user_id).filter(Boolean))];
+    if (userIds.length) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, username, avatar_url')
+        .in('id', userIds);
+      if (profiles) {
+        const map = Object.fromEntries(profiles.map(p => [p.id, p]));
+        setAuthors(map);
       }
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    loadComments();
+  }, [postId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,32 +61,20 @@ export default function Comments({ postId }: { postId: number }) {
     setSubmitting(true);
     const { error } = await supabase
       .from('comments')
-      .insert({
-        content: newComment.trim(),
-        post_id: postId,
-        user_id: userId,
-      });
-    if (error) {
-      alert('Error: ' + error.message);
-    } else {
+      .insert({ content: newComment.trim(), post_id: postId, user_id: userId });
+    if (error) alert('Error: ' + error.message);
+    else {
       setNewComment('');
-      fetchComments();
+      loadComments();
     }
     setSubmitting(false);
   };
 
-  const handleDelete = async (commentId: number, commentUserId: string) => {
-    if (userId !== commentUserId && userId !== postAuthorId) {
-      alert('You can only delete your own comments');
-      return;
-    }
+  const handleDelete = async (commentId: number) => {
     if (!confirm('Delete this comment?')) return;
     const { error } = await supabase.from('comments').delete().eq('id', commentId);
-    if (error) {
-      alert('Error: ' + error.message);
-    } else {
-      fetchComments();
-    }
+    if (error) alert('Error: ' + error.message);
+    else loadComments();
   };
 
   if (loading) return <div>Loading comments...</div>;
@@ -125,56 +91,27 @@ export default function Comments({ postId }: { postId: number }) {
             rows={3}
             style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
           />
-          <button
-            type="submit"
-            disabled={submitting}
-            className="btn btn-primary"
-            style={{ marginTop: '0.5rem' }}
-          >
+          <button type="submit" disabled={submitting} className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
             {submitting ? 'Posting...' : 'Post Comment'}
           </button>
         </form>
       ) : (
-        <p>
-          <a href="/login" style={{ color: '#0070f3' }}>Sign in</a> to comment.
-        </p>
+        <p><a href="/login">Sign in to comment</a></p>
       )}
-      {comments.map((comment) => {
-        const profile = profilesMap[comment.user_id] || { full_name: null, username: null, avatar_url: null };
-        const authorName = profile.full_name || profile.username || comment.user_id?.slice(0, 6) || 'User';
-        const canDelete = userId && (userId === comment.user_id || userId === postAuthorId);
+      {comments.map(comment => {
+        const author = authors[comment.user_id] || { full_name: null, username: null, avatar_url: null };
+        const authorName = author.full_name || author.username || 'User';
         return (
-          <div
-            key={comment.id}
-            style={{
-              borderBottom: '1px solid #eee',
-              padding: '0.75rem 0',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'start',
-              gap: '0.5rem',
-            }}
-          >
+          <div key={comment.id} style={{ borderBottom: '1px solid #eee', padding: '0.75rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
             <div style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
-              <Avatar url={profile.avatar_url} size={28} />
+              <Avatar url={author.avatar_url} size={28} />
               <div>
-                <div>
-                  <b>{authorName}</b>
-                  <small style={{ marginLeft: '0.5rem', color: '#666' }}>
-                    {new Date(comment.created_at).toLocaleString()}
-                  </small>
-                </div>
-                <p style={{ marginTop: '0.25rem' }}>{comment.content}</p>
+                <b>{authorName}</b> <small>{new Date(comment.created_at).toLocaleString()}</small>
+                <p>{comment.content}</p>
               </div>
             </div>
-            {canDelete && (
-              <button
-                onClick={() => handleDelete(comment.id, comment.user_id)}
-                style={{ background: 'none', border: 'none', color: '#f44336', cursor: 'pointer' }}
-                aria-label="Delete comment"
-              >
-                🗑️
-              </button>
+            {userId === comment.user_id && (
+              <button onClick={() => handleDelete(comment.id)} style={{ background: 'none', border: 'none', color: '#f44336', cursor: 'pointer' }}>🗑️</button>
             )}
           </div>
         );

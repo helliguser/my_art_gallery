@@ -9,18 +9,16 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    async function checkUserLike() {
-      const { data: { session } } = await supabase.auth.getSession();
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return;
-      const { data } = await supabase
+      supabase
         .from('likes')
         .select('id')
         .eq('post_id', postId)
         .eq('user_id', session.user.id)
-        .maybeSingle();
-      setUserLiked(!!data);
-    }
-    checkUserLike();
+        .maybeSingle()
+        .then(({ data }) => setUserLiked(!!data));
+    });
   }, [postId]);
 
   const handleLike = async () => {
@@ -55,7 +53,7 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
   };
 
   return (
-    <button onClick={handleLike} disabled={loading} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>
+    <button onClick={handleLike} disabled={loading} className="like-button" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>
       {userLiked ? '❤️' : '🤍'} {likes}
     </button>
   );

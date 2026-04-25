@@ -7,7 +7,9 @@ export default async function MyPostsPage() {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
-  if (!session) redirect('/login?redirect_to=/my-posts');
+  if (!session) {
+    redirect('/login?redirect_to=/my-posts');
+  }
 
   const { data: posts, error } = await supabase
     .from('posts')
@@ -15,7 +17,9 @@ export default async function MyPostsPage() {
     .eq('user_id', session.user.id)
     .order('created_at', { ascending: false });
 
-  if (error) return <div className="container">Error loading your posts</div>;
+  if (error) {
+    return <div className="container">Error loading your posts: {error.message}</div>;
+  }
 
   return (
     <div className="container">
@@ -27,7 +31,7 @@ export default async function MyPostsPage() {
         <p>You haven't posted anything yet. <Link href="/upload">Upload your first artwork</Link></p>
       ) : (
         <div className="gallery">
-          {posts.map((post) => (
+          {posts.map(post => (
             <div key={post.id} className="card">
               <Link href={`/post/${post.id}`}>
                 <img src={post.image_url} alt={post.title} />
