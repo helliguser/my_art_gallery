@@ -25,6 +25,7 @@ export default async function PostPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
 
+  // Получаем пост
   const { data: post, error } = await supabase
     .from('posts')
     .select('*')
@@ -35,12 +36,25 @@ export default async function PostPage({ params }: PageProps) {
     notFound()
   }
 
+  // Получаем профиль автора (если есть)
+  let authorName = 'Anonymous'
+  if (post.user_id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, username')
+      .eq('id', post.user_id)
+      .single()
+    if (profile) {
+      authorName = profile.full_name || profile.username || 'Anonymous'
+    }
+  }
+
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <Link href="/">← Back to Gallery</Link>
       <h1>{post.title}</h1>
       <img src={post.image_url} alt={post.title} style={{ width: '100%', borderRadius: '8px' }} />
-      <p>by {post.user_id}</p>
+      <p>by {authorName}</p>
     </div>
   )
 }
