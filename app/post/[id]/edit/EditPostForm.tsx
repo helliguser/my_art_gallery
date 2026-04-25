@@ -13,9 +13,16 @@ export default function EditPostForm({ postId, currentTitle }: { postId: number;
     e.preventDefault();
     if (!title.trim()) return;
     setLoading(true);
-    const { error } = await supabase.from('posts').update({ title: title.trim() }).eq('id', postId);
-    if (error) alert('Error updating: ' + error.message);
-    else router.push(`/post/${postId}`);
+    const { error } = await supabase
+      .from('posts')
+      .update({ title: title.trim() })
+      .eq('id', postId);
+    if (error) {
+      alert('Error updating: ' + error.message);
+    } else {
+      router.push(`/post/${postId}`);
+      router.refresh();
+    }
     setLoading(false);
   };
 
@@ -23,9 +30,18 @@ export default function EditPostForm({ postId, currentTitle }: { postId: number;
     <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
       <div>
         <label htmlFor="title">Title</label>
-        <input type="text" id="title" value={title} onChange={(e) => setTitle(e.target.value)} required style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }} />
+        <input
+          id="title"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
+        />
       </div>
-      <button type="submit" disabled={loading} className="btn btn-primary">{loading ? 'Saving...' : 'Save Changes'}</button>
+      <button type="submit" disabled={loading} className="btn btn-primary">
+        {loading ? 'Saving...' : 'Save Changes'}
+      </button>
     </form>
   );
 }
