@@ -30,7 +30,7 @@ export default function FollowButton({ userId }: { userId: string }) {
 
   const handleFollow = async () => {
     if (!currentUserId) {
-      alert('Please sign in to follow');
+      alert('Please sign in');
       return;
     }
     if (currentUserId === userId) return;
