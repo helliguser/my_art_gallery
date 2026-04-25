@@ -249,4 +249,9 @@ textarea {
   .post-title {
     font-size: 1.5rem;
   }
+  .loading-spinner {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
 }

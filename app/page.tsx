@@ -1,33 +1,67 @@
-import { createClient } from '@/lib/supabase-server';
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import UserMenu from '@/components/UserMenu';
 import Avatar from '@/components/Avatar';
+import InfiniteScroll from '@/components/InfiniteScroll';
 
-export const dynamic = 'force-dynamic';
+type Post = {
+  id: number;
+  title: string;
+  image_url: string;
+  created_at: string;
+  user_id: string;
+  likes_count: number;
+  profile: {
+    full_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
+};
 
-export default async function HomePage() {
-  const supabase = await createClient();
-  const { data: posts, error } = await supabase
-    .from('posts')
-    .select('*, likes_count')
-    .order('created_at', { ascending: false });
+export default function HomePage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
-  if (error) return <div className="container">Error loading gallery</div>;
-
-  const userIds = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
-  let profilesMap: Record<string, { full_name: string | null; username: string | null; avatar_url: string | null }> = {};
-  if (userIds.length) {
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, full_name, username, avatar_url')
-      .in('id', userIds);
-    if (profiles) {
-      profilesMap = Object.fromEntries(profiles.map(p => [p.id, p]));
+  const fetchPosts = async (pageNum: number) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/posts?page=${pageNum}&limit=12`);
+      const data = await res.json();
+      if (data.error) {
+        console.error(data.error);
+        return;
+      }
+      if (pageNum === 1) {
+        setPosts(data.posts);
+      } else {
+        setPosts(prev => [...prev, ...data.posts]);
+      }
+      setHasMore(pageNum < data.totalPages);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  const { data: { session } } = await supabase.auth.getSession();
-  const isLoggedIn = !!session;
+  useEffect(() => {
+    fetchPosts(1).finally(() => setInitialLoading(false));
+  }, []);
+
+  const loadMore = async () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    await fetchPosts(nextPage);
+  };
+
+  if (initialLoading) {
+    return <div className="container">Loading...</div>;
+  }
 
   return (
     <div className="container">
@@ -35,28 +69,27 @@ export default async function HomePage() {
         <h1 className="logo">Art Gallery</h1>
         <UserMenu />
       </header>
-      <div className="gallery">
-        {posts.map(post => {
-          const profile = profilesMap[post.user_id];
-          const authorName = profile?.full_name || profile?.username || 'Anonymous';
-          return (
-            <div key={post.id} className="card">
-              <Link href={`/post/${post.id}`}>
-                <img src={post.image_url} alt={post.title} />
-              </Link>
-              <div className="card-content">
-                <div className="card-title">{post.title}</div>
-                <div className="card-author" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', flexWrap: 'wrap' }}>
-                  <div style={{ flexShrink: 0, lineHeight: 0 }}>
-                    <Avatar url={profile?.avatar_url} size={24} />
+      <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
+        <div className="gallery">
+          {posts.map(post => {
+            const authorName = post.profile?.full_name || post.profile?.username || 'Anonymous';
+            return (
+              <div key={post.id} className="card">
+                <Link href={`/post/${post.id}`}>
+                  <img src={post.image_url} alt={post.title} />
+                </Link>
+                <div className="card-content">
+                  <div className="card-title">{post.title}</div>
+                  <div className="card-author">
+                    <Avatar url={post.profile?.avatar_url} size={24} />
+                    <Link href={`/user/${post.user_id}`}>{authorName}</Link>
                   </div>
-                  <Link href={`/user/${post.user_id}`}>{authorName}</Link>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </InfiniteScroll>
     </div>
   );
 }
