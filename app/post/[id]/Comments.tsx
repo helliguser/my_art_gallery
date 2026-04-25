@@ -8,14 +8,11 @@ type Comment = {
   content: string;
   created_at: string;
   user_id: string;
-  profiles?: {
-    full_name: string | null;
-    username: string | null;
-  };
 };
 
 export default function Comments({ postId }: { postId: number }) {
   const [comments, setComments] = useState<Comment[]>([]);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -40,12 +37,38 @@ export default function Comments({ postId }: { postId: number }) {
   }, [postId]);
 
   const fetchComments = async () => {
+    // Загружаем комментарии без join
     const { data, error } = await supabase
       .from('comments')
-      .select('*, profiles(full_name, username)')
+      .select('*')
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
-    if (!error && data) setComments(data);
+
+    if (error) {
+      console.error('Error loading comments:', error);
+      setLoading(false);
+      return;
+    }
+
+    setComments(data || []);
+
+    // Если есть комментарии, загружаем имена авторов отдельно
+    if (data && data.length > 0) {
+      const userIds = [...new Set(data.map(c => c.user_id).filter(Boolean))];
+      if (userIds.length) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, username')
+          .in('id', userIds);
+        if (profiles) {
+          const map: Record<string, string> = {};
+          profiles.forEach(p => {
+            map[p.id] = p.full_name || p.username || 'User';
+          });
+          setUserNames(map);
+        }
+      }
+    }
     setLoading(false);
   };
 
@@ -100,11 +123,12 @@ export default function Comments({ postId }: { postId: number }) {
       )}
       <div>
         {comments.map(comment => {
-          const canDelete = userId === comment.user_id || userId === postAuthorId;
+          const canDelete = userId && (userId === comment.user_id || userId === postAuthorId);
+          const authorName = userNames[comment.user_id] || comment.user_id?.slice(0, 6) || 'User';
           return (
             <div key={comment.id} style={{ borderBottom: '1px solid #eee', padding: '0.75rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
               <div style={{ flex: 1 }}>
-                <b>{comment.profiles?.full_name || comment.profiles?.username || 'User'}</b>
+                <b>{authorName}</b>
                 <small style={{ marginLeft: '0.5rem', color: '#666' }}>{new Date(comment.created_at).toLocaleString()}</small>
                 <p style={{ marginTop: '0.25rem' }}>{comment.content}</p>
               </div>
