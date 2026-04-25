@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, FormEvent, ChangeEvent } from 'react';
-import { supabase } from '../../lib/supabase';
-import { useRouter } from 'next/navigation';
+import { useState, FormEvent, ChangeEvent, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -11,6 +11,15 @@ export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [message, setMessage] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
+
+  useEffect(() => {
+    // Проверяем, возможно уже залогинены
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.push(redirectTo);
+    });
+  }, [router, redirectTo]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -19,7 +28,7 @@ export default function LoginPage() {
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setMessage(error.message);
-      else router.push('/');
+      else router.push(redirectTo);
     } else {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) setMessage(error.message);
