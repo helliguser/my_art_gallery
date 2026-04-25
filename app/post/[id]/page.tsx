@@ -4,8 +4,40 @@ import Link from 'next/link';
 import Comments from './Comments';
 import LikeButton from '@/components/LikeButton';
 import Avatar from '@/components/Avatar';
+import type { Metadata } from 'next';
 
-export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+// Динамические мета-теги для каждого поста
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: post } = await supabase
+    .from('posts')
+    .select('title, image_url, user_id')
+    .eq('id', id)
+    .single();
+
+  if (!post) {
+    return {
+      title: 'Post Not Found',
+    };
+  }
+
+  return {
+    title: `${post.title} | Art Gallery`,
+    description: `View artwork "${post.title}" by ${post.user_id}. Like and comment on this piece.`,
+    openGraph: {
+      title: post.title,
+      description: `Artwork by ${post.user_id}`,
+      images: [post.image_url],
+    },
+  };
+}
+
+export default async function PostPage({ params }: Props) {
   const { id } = await params;
   const supabase = await createClient();
 
