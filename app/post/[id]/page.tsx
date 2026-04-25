@@ -20,7 +20,7 @@ async function createClient() {
 }
 
 type PageProps = {
-  params: Promise<{ id: string }> | { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default async function PostPage({ params }: PageProps) {
@@ -35,6 +35,7 @@ export default async function PostPage({ params }: PageProps) {
 
   if (error || !post) notFound();
 
+  // Получаем автора поста
   let authorName = 'Anonymous';
   if (post.user_id) {
     const { data: profile } = await supabase
@@ -45,6 +46,10 @@ export default async function PostPage({ params }: PageProps) {
     if (profile) authorName = profile.full_name || profile.username || 'Anonymous';
   }
 
+  // Проверяем, является ли текущий пользователь автором
+  const { data: { session } } = await supabase.auth.getSession();
+  const isAuthor = session?.user?.id === post.user_id;
+
   return (
     <div className="container">
       <div className="post-page">
@@ -52,9 +57,14 @@ export default async function PostPage({ params }: PageProps) {
         <h1 className="post-title">{post.title}</h1>
         <img src={post.image_url} alt={post.title} className="post-image" />
         <div className="post-meta">
-          by {authorName}
-          <div style={{ marginTop: '0.5rem' }}>
+          <div>by {authorName}</div>
+          <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
+            {isAuthor && (
+              <Link href={`/post/${post.id}/edit`} className="btn btn-secondary" style={{ fontSize: '0.8rem' }}>
+                Edit
+              </Link>
+            )}
           </div>
         </div>
         <Comments postId={post.id} />
