@@ -12,13 +12,13 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
     async function checkUserLike() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('likes')
         .select('id')
         .eq('post_id', postId)
         .eq('user_id', session.user.id)
-        .maybeSingle(); // используем maybeSingle вместо single, чтобы не было ошибки при отсутствии данных
-      if (!error) setUserLiked(!!data);
+        .maybeSingle();
+      setUserLiked(!!data);
     }
     checkUserLike();
   }, [postId]);
@@ -26,14 +26,12 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
   const handleLike = async () => {
     if (loading) return;
     setLoading(true);
-
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       alert('Please sign in to like');
       setLoading(false);
       return;
     }
-
     if (userLiked) {
       const { error } = await supabase
         .from('likes')
@@ -43,7 +41,6 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       if (!error) {
         setLikes(prev => prev - 1);
         setUserLiked(false);
-        await supabase.rpc('decrement_post_likes', { post_id: postId });
       }
     } else {
       const { error } = await supabase
@@ -52,21 +49,14 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       if (!error) {
         setLikes(prev => prev + 1);
         setUserLiked(true);
-        await supabase.rpc('increment_post_likes', { post_id: postId });
       }
     }
     setLoading(false);
   };
 
   return (
-    <button
-      onClick={handleLike}
-      disabled={loading}
-      className="like-button"
-      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-    >
-      <span>{userLiked ? '❤️' : '🤍'}</span>
-      <span>{likes}</span>
+    <button onClick={handleLike} disabled={loading} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>
+      {userLiked ? '❤️' : '🤍'} {likes}
     </button>
   );
 }

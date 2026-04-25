@@ -6,6 +6,7 @@ import UserMenu from '@/components/UserMenu';
 import Avatar from '@/components/Avatar';
 import InfiniteScroll from '@/components/InfiniteScroll';
 import { useDebounce } from 'use-debounce';
+import { supabase } from '@/lib/supabase';
 
 type Post = {
   id: number;
@@ -30,16 +31,16 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebounce(searchTerm, 500);
   const [feedType, setFeedType] = useState<'all' | 'following'>('all');
-  const [session, setSession] = useState<any>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // Проверяем, залогинен ли пользователь (для показа переключателя ленты)
   useEffect(() => {
-    // Получаем сессию для проверки авторизации
-    fetch('/api/auth/session')
-      .then(res => res.json())
-      .catch(() => null);
-    // Упростим: будем передавать параметр following=true в API
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
   }, []);
 
+  // Загружаем посты при изменении поиска или типа ленты
   useEffect(() => {
     setPosts([]);
     setPage(1);
@@ -50,22 +51,27 @@ export default function HomePage() {
   const fetchPosts = async (pageNum: number, search: string, type: 'all' | 'following') => {
     setLoading(true);
     const url = `/api/posts?page=${pageNum}&limit=12&search=${encodeURIComponent(search)}&following=${type === 'following'}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.error) {
-      console.error(data.error);
-      setLoading(false);
-      return;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.error) {
+        console.error(data.error);
+        setLoading(false);
+        return;
+      }
+      if (pageNum === 1) {
+        setPosts(data.posts);
+      } else {
+        setPosts(prev => [...prev, ...data.posts]);
+      }
+      setHasMore(pageNum < data.totalPages);
+    } catch (err) {
+      console.error('Fetch error:', err);
     }
-    if (pageNum === 1) {
-      setPosts(data.posts);
-    } else {
-      setPosts(prev => [...prev, ...data.posts]);
-    }
-    setHasMore(pageNum < data.totalPages);
     setLoading(false);
   };
 
+  // Первоначальная загрузка
   useEffect(() => {
     fetchPosts(1, '', 'all').finally(() => setInitialLoading(false));
   }, []);
@@ -87,23 +93,23 @@ export default function HomePage() {
         <UserMenu />
       </header>
 
-      {/* Переключатель ленты */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-        <button
-          onClick={() => setFeedType('all')}
-          className={`btn ${feedType === 'all' ? 'btn-primary' : 'btn-outline'}`}
-        >
-          All Artworks
-        </button>
-        <button
-          onClick={() => setFeedType('following')}
-          className={`btn ${feedType === 'following' ? 'btn-primary' : 'btn-outline'}`}
-        >
-          Following
-        </button>
-      </div>
+      {isLoggedIn && (
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+          <button
+            onClick={() => setFeedType('all')}
+            className={`btn ${feedType === 'all' ? 'btn-primary' : 'btn-outline'}`}
+          >
+            All Artworks
+          </button>
+          <button
+            onClick={() => setFeedType('following')}
+            className={`btn ${feedType === 'following' ? 'btn-primary' : 'btn-outline'}`}
+          >
+            Following
+          </button>
+        </div>
+      )}
 
-      {/* Поиск */}
       <div style={{ marginBottom: '1.5rem' }}>
         <input
           type="text"
