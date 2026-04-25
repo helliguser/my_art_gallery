@@ -8,10 +8,6 @@ type Comment = {
   content: string;
   created_at: string;
   user_id: string;
-  profiles?: {
-    full_name: string | null;
-    username: string | null;
-  };
 };
 
 export default function Comments({ postId }: { postId: number }) {
@@ -21,7 +17,6 @@ export default function Comments({ postId }: { postId: number }) {
   const [submitting, setSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Получаем текущего пользователя на клиенте
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user?.id || null);
@@ -32,26 +27,46 @@ export default function Comments({ postId }: { postId: number }) {
   const fetchComments = async () => {
     const { data, error } = await supabase
       .from('comments')
-      .select('*, profiles(full_name, username)')
+      .select('*')  // без profiles
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
-    if (!error && data) setComments(data);
+
+    if (error) {
+      console.error('Fetch error:', error);
+    } else {
+      setComments(data || []);
+    }
     setLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !userId) return;
+    if (!newComment.trim()) {
+      alert('Comment cannot be empty');
+      return;
+    }
+    if (!userId) {
+      alert('You must be logged in to comment');
+      return;
+    }
+
     setSubmitting(true);
-    const { error } = await supabase.from('comments').insert({
-      content: newComment.trim(),
-      post_id: postId,
-      user_id: userId,
-    });
-    if (error) alert('Error: ' + error.message);
-    else {
+    const { error, data } = await supabase
+      .from('comments')
+      .insert({
+        content: newComment.trim(),
+        post_id: postId,
+        user_id: userId,
+      })
+      .select(); // возвращаем вставленную запись
+
+    if (error) {
+      console.error('Insert error:', error);
+      alert('Error: ' + error.message);
+    } else if (data && data[0]) {
+      // Оптимистичное добавление (сразу показываем новый комментарий)
+      setComments(prev => [...prev, data[0]]);
       setNewComment('');
-      fetchComments();
     }
     setSubmitting(false);
   };
@@ -83,7 +98,10 @@ export default function Comments({ postId }: { postId: number }) {
       )}
       {comments.map(comment => (
         <div key={comment.id} style={{ borderBottom: '1px solid #eee', padding: '0.75rem 0' }}>
-          <b>{comment.profiles?.full_name || comment.profiles?.username || 'User'}</b> <small style={{ marginLeft: '0.5rem', color: '#666' }}>{new Date(comment.created_at).toLocaleString()}</small>
+          <b>User {comment.user_id?.slice(0, 6)}</b>
+          <small style={{ marginLeft: '0.5rem', color: '#666' }}>
+            {new Date(comment.created_at).toLocaleString()}
+          </small>
           <p style={{ marginTop: '0.25rem' }}>{comment.content}</p>
         </div>
       ))}
