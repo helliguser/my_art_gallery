@@ -59,12 +59,10 @@ export default function UploadPage() {
     alert('Artwork published!');
     setTitle('');
     setFile(null);
-    // Если хотите сразу перенаправлять на страницу поста, нужно получить id,
-    // но проще оставить так, чтобы можно было загружать несколько.
   };
 
   if (loading) return <div className="container">Loading...</div>;
-  if (!user) return null; // редирект уже выполнен
+  if (!user) return null;
 
   return (
     <div className="container">

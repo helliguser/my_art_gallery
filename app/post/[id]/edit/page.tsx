@@ -25,10 +25,9 @@ type PageProps = {
 export default async function EditPostPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
-
-  // Проверяем авторизацию и авторство
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect('/login');
+
+  if (!session) redirect(`/login?redirect_to=/post/${id}/edit`);
 
   const { data: post, error } = await supabase
     .from('posts')
@@ -37,12 +36,14 @@ export default async function EditPostPage({ params }: PageProps) {
     .single();
 
   if (error || !post) notFound();
-  if (post.user_id !== session.user.id) redirect('/'); // не автор
+  if (post.user_id !== session.user.id) redirect('/');
 
   return (
     <div className="container">
       <div className="post-page">
-        <Link href={`/post/${id}`} className="btn btn-outline" style={{ marginBottom: '1rem', display: 'inline-block' }}>← Back to post</Link>
+        <Link href={`/post/${id}`} className="btn btn-outline" style={{ marginBottom: '1rem', display: 'inline-block' }}>
+          ← Back to post
+        </Link>
         <h1>Edit Artwork</h1>
         <EditPostForm postId={post.id} currentTitle={post.title} />
       </div>
