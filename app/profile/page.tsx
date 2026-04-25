@@ -25,7 +25,7 @@ export default function ProfilePage() {
     async function fetchProfile() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        router.push('/login');
+        router.push('/login?redirect_to=/profile');
         return;
       }
       setUserId(session.user.id);

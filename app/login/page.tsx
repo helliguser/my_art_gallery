@@ -12,10 +12,10 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/';
+  const redirectTo = searchParams.get('redirect_to') || '/';
 
   useEffect(() => {
-    // Проверяем, возможно уже залогинены
+    // Если пользователь уже залогинен, отправляем сразу
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) router.push(redirectTo);
     });

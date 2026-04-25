@@ -23,7 +23,7 @@ export default async function MyPostsPage() {
 
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    redirect('/login?redirect=/my-posts');
+    redirect('/login?redirect_to=/my-posts');
   }
 
   const { data: posts, error } = await supabase
