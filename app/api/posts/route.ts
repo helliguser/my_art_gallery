@@ -22,8 +22,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Безопасно получаем уникальные user_id
-  const userIds = Array.from(new Set(posts.map(p => p.user_id).filter(Boolean)));
+  const userIds = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
   let profilesMap: Record<string, any> = {};
   if (userIds.length) {
     const { data: profiles } = await supabase
@@ -37,7 +36,7 @@ export async function GET(request: NextRequest) {
 
   const enrichedPosts = posts.map(post => ({
     ...post,
-    profile: post.user_id ? profilesMap[post.user_id] || null : null,
+    profile: profilesMap[post.user_id] || null,
   }));
 
   return NextResponse.json({

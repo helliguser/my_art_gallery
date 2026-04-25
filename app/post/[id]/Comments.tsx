@@ -4,16 +4,9 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Avatar from '@/components/Avatar';
 
-type Comment = {
-  id: number;
-  content: string;
-  created_at: string;
-  user_id: string;
-};
-
 export default function Comments({ postId }: { postId: number }) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [authors, setAuthors] = useState<Record<string, { full_name: string | null; username: string | null; avatar_url: string | null }>>({});
+  const [comments, setComments] = useState<any[]>([]);
+  const [authors, setAuthors] = useState<Record<string, any>>({});
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -36,7 +29,6 @@ export default function Comments({ postId }: { postId: number }) {
     }
     setComments(data || []);
 
-    // Загружаем профили авторов комментариев
     const userIds = [...new Set(data.map(c => c.user_id).filter(Boolean))];
     if (userIds.length) {
       const { data: profiles } = await supabase
@@ -44,8 +36,7 @@ export default function Comments({ postId }: { postId: number }) {
         .select('id, full_name, username, avatar_url')
         .in('id', userIds);
       if (profiles) {
-        const map = Object.fromEntries(profiles.map(p => [p.id, p]));
-        setAuthors(map);
+        setAuthors(Object.fromEntries(profiles.map(p => [p.id, p])));
       }
     }
     setLoading(false);
@@ -71,10 +62,9 @@ export default function Comments({ postId }: { postId: number }) {
   };
 
   const handleDelete = async (commentId: number) => {
-    if (!confirm('Delete this comment?')) return;
-    const { error } = await supabase.from('comments').delete().eq('id', commentId);
-    if (error) alert('Error: ' + error.message);
-    else loadComments();
+    if (!confirm('Delete comment?')) return;
+    await supabase.from('comments').delete().eq('id', commentId);
+    loadComments();
   };
 
   if (loading) return <div>Loading comments...</div>;
@@ -99,7 +89,7 @@ export default function Comments({ postId }: { postId: number }) {
         <p><a href="/login">Sign in to comment</a></p>
       )}
       {comments.map(comment => {
-        const author = authors[comment.user_id] || { full_name: null, username: null, avatar_url: null };
+        const author = authors[comment.user_id] || {};
         const authorName = author.full_name || author.username || 'User';
         return (
           <div key={comment.id} style={{ borderBottom: '1px solid #eee', padding: '0.75rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>

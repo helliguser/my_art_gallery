@@ -9,7 +9,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const supabase = await createClient();
 
-  // 1. Получаем пост
   const { data: post, error } = await supabase
     .from('posts')
     .select('*')
@@ -18,7 +17,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 
   if (error || !post) notFound();
 
-  // 2. Получаем профиль автора
   let authorProfile = { full_name: null, username: null, avatar_url: null };
   if (post.user_id) {
     const { data: profile } = await supabase
@@ -29,7 +27,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     if (profile) authorProfile = profile;
   }
 
-  // 3. Проверяем, является ли текущий пользователь автором
   const { data: { session } } = await supabase.auth.getSession();
   const isAuthor = session?.user?.id === post.user_id;
   const authorName = authorProfile.full_name || authorProfile.username || 'Anonymous';
@@ -52,7 +49,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
             )}
           </div>
         </div>
-        {/* Компонент Comments сам загружает комментарии */}
         <Comments postId={post.id} />
       </div>
     </div>
