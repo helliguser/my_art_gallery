@@ -5,23 +5,29 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '12');
-  const offset = (page - 1) * limit;
+  const search = searchParams.get('search') || '';
+  const start = (page - 1) * limit;
+  const end = start + limit - 1;
 
   const supabase = await createClient();
 
-  const { data: posts, error } = await supabase
+  let query = supabase
     .from('posts')
-    .select('*, likes_count')
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+    .select('*, likes_count', { count: 'exact' })
+    .order('created_at', { ascending: false });
+
+  if (search) {
+    query = query.ilike('title', `%${search}%`);
+  }
+
+  const { data: posts, error, count } = await query.range(start, end);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Получаем профили авторов
   const userIds = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
-  let profilesMap = {};
+  let profilesMap: Record<string, any> = {};
   if (userIds.length) {
     const { data: profiles } = await supabase
       .from('profiles')
@@ -32,11 +38,15 @@ export async function GET(request: Request) {
     }
   }
 
-  // Добавляем данные авторов к постам
-  const postsWithAuthors = posts.map(post => ({
+  const enrichedPosts = posts.map(post => ({
     ...post,
-    author: profilesMap[post.user_id] || { full_name: null, username: null, avatar_url: null }
+    profile: profilesMap[post.user_id] || null,
   }));
 
-  return NextResponse.json({ posts: postsWithAuthors, hasMore: posts.length === limit });
+  return NextResponse.json({
+    posts: enrichedPosts,
+    total: count,
+    page,
+    totalPages: Math.ceil((count || 0) / limit),
+  });
 }

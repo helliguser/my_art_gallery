@@ -5,6 +5,7 @@ import Link from 'next/link';
 import UserMenu from '@/components/UserMenu';
 import Avatar from '@/components/Avatar';
 import InfiniteScroll from '@/components/InfiniteScroll';
+import { useDebounce } from 'use-debounce';
 
 type Post = {
   id: number;
@@ -26,37 +27,43 @@ export default function HomePage() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch] = useDebounce(searchTerm, 500);
 
-  const fetchPosts = async (pageNum: number) => {
+  // Сброс при изменении поиска
+  useEffect(() => {
+    setPosts([]);
+    setPage(1);
+    setHasMore(true);
+    fetchPosts(1, debouncedSearch);
+  }, [debouncedSearch]);
+
+  const fetchPosts = async (pageNum: number, search: string) => {
     setLoading(true);
-    try {
-      const res = await fetch(`/api/posts?page=${pageNum}&limit=12`);
-      const data = await res.json();
-      if (data.error) {
-        console.error(data.error);
-        return;
-      }
-      if (pageNum === 1) {
-        setPosts(data.posts);
-      } else {
-        setPosts(prev => [...prev, ...data.posts]);
-      }
-      setHasMore(pageNum < data.totalPages);
-    } catch (err) {
-      console.error(err);
-    } finally {
+    const res = await fetch(`/api/posts?page=${pageNum}&limit=12&search=${encodeURIComponent(search)}`);
+    const data = await res.json();
+    if (data.error) {
+      console.error(data.error);
       setLoading(false);
+      return;
     }
+    if (pageNum === 1) {
+      setPosts(data.posts);
+    } else {
+      setPosts(prev => [...prev, ...data.posts]);
+    }
+    setHasMore(pageNum < data.totalPages);
+    setLoading(false);
   };
 
   useEffect(() => {
-    fetchPosts(1).finally(() => setInitialLoading(false));
+    fetchPosts(1, '').finally(() => setInitialLoading(false));
   }, []);
 
   const loadMore = async () => {
     const nextPage = page + 1;
     setPage(nextPage);
-    await fetchPosts(nextPage);
+    await fetchPosts(nextPage, debouncedSearch);
   };
 
   if (initialLoading) {
@@ -69,7 +76,24 @@ export default function HomePage() {
         <h1 className="logo">Art Gallery</h1>
         <UserMenu />
       </header>
+      {/* Строка поиска */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <input
+          type="text"
+          placeholder="Search by title..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            borderRadius: '8px',
+            border: '1px solid #ccc',
+            fontSize: '1rem',
+          }}
+        />
+      </div>
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
+        {posts.length === 0 && !loading && <p style={{ textAlign: 'center' }}>No artworks found.</p>}
         <div className="gallery">
           {posts.map(post => {
             const authorName = post.profile?.full_name || post.profile?.username || 'Anonymous';
