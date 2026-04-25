@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import Avatar from '@/components/Avatar';
 
 type Comment = {
   id: number;
@@ -10,9 +11,15 @@ type Comment = {
   user_id: string;
 };
 
+type ProfileInfo = {
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+};
+
 export default function Comments({ postId }: { postId: number }) {
   const [comments, setComments] = useState<Comment[]>([]);
-  const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const [profilesMap, setProfilesMap] = useState<Record<string, ProfileInfo>>({});
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -56,14 +63,14 @@ export default function Comments({ postId }: { postId: number }) {
       if (userIds.length) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, full_name, username')
+          .select('id, full_name, username, avatar_url')
           .in('id', userIds);
         if (profiles) {
-          const map: Record<string, string> = {};
+          const map: Record<string, ProfileInfo> = {};
           profiles.forEach(p => {
-            map[p.id] = p.full_name || p.username || 'User';
+            map[p.id] = { full_name: p.full_name, username: p.username, avatar_url: p.avatar_url };
           });
-          setUserNames(map);
+          setProfilesMap(map);
         }
       }
     }
@@ -133,8 +140,9 @@ export default function Comments({ postId }: { postId: number }) {
         </p>
       )}
       {comments.map((comment) => {
+        const profile = profilesMap[comment.user_id] || { full_name: null, username: null, avatar_url: null };
+        const authorName = profile.full_name || profile.username || comment.user_id?.slice(0, 6) || 'User';
         const canDelete = userId && (userId === comment.user_id || userId === postAuthorId);
-        const authorName = userNames[comment.user_id] || comment.user_id?.slice(0, 6) || 'User';
         return (
           <div
             key={comment.id}
@@ -144,14 +152,20 @@ export default function Comments({ postId }: { postId: number }) {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'start',
+              gap: '0.5rem',
             }}
           >
-            <div>
-              <b>{authorName}</b>
-              <small style={{ marginLeft: '0.5rem', color: '#666' }}>
-                {new Date(comment.created_at).toLocaleString()}
-              </small>
-              <p style={{ marginTop: '0.25rem' }}>{comment.content}</p>
+            <div style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
+              <Avatar url={profile.avatar_url} size={28} />
+              <div>
+                <div>
+                  <b>{authorName}</b>
+                  <small style={{ marginLeft: '0.5rem', color: '#666' }}>
+                    {new Date(comment.created_at).toLocaleString()}
+                  </small>
+                </div>
+                <p style={{ marginTop: '0.25rem' }}>{comment.content}</p>
+              </div>
             </div>
             {canDelete && (
               <button

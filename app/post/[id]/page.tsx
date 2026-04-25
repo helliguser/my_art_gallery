@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Comments from './Comments';
 import LikeButton from '@/components/LikeButton';
+import Avatar from '@/components/Avatar';
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,15 +17,17 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 
   if (error || !post) notFound();
 
-  let authorName = 'Anonymous';
+  // Получаем профиль автора (включая аватар)
+  let authorProfile = { full_name: null, username: null, avatar_url: null };
   if (post.user_id) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('full_name, username')
+      .select('full_name, username, avatar_url')
       .eq('id', post.user_id)
       .single();
-    if (profile) authorName = profile.full_name || profile.username || 'Anonymous';
+    if (profile) authorProfile = profile;
   }
+  const authorName = authorProfile.full_name || authorProfile.username || 'Anonymous';
 
   const { data: { session } } = await supabase.auth.getSession();
   const isAuthor = session?.user?.id === post.user_id;
@@ -35,9 +38,10 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         <Link href="/" className="btn btn-outline" style={{ marginBottom: '1rem', display: 'inline-block' }}>← Back</Link>
         <h1 className="post-title">{post.title}</h1>
         <img src={post.image_url} alt={post.title} className="post-image" />
-        <div className="post-meta">
-          by {authorName}
-          <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="post-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <Avatar url={authorProfile.avatar_url} size={32} />
+          <div>by {authorName}</div>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
             {isAuthor && (
               <Link href={`/post/${post.id}/edit`} className="btn btn-secondary" style={{ fontSize: '0.8rem' }}>
