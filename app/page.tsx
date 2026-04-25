@@ -24,23 +24,30 @@ type Post = {
   image_url: string
   created_at: string
   user_id: string
-  profiles?: { username: string; full_name: string | null }
 }
 
 export default async function HomePage() {
   const supabase = await createClient()
 
+  // 1. Проверяем, залогинен ли пользователь (для кнопок)
   const { data: { session } } = await supabase.auth.getSession()
   const isLoggedIn = !!session
 
+  // 2. Получаем посты (просто, без join)
   const { data: posts, error } = await supabase
     .from('posts')
-    .select('*, profiles(username, full_name)')
+    .select('*')
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error(error)
-    return <div style={{ padding: '2rem' }}>Error loading gallery</div>
+    console.error('Gallery error:', error)
+    return (
+      <div style={{ padding: '2rem' }}>
+        <h1>Art Gallery</h1>
+        <p style={{ color: 'red' }}>Error loading gallery: {error.message}</p>
+        <p>Check that table "posts" exists and has columns: id, title, image_url, created_at, user_id</p>
+      </div>
+    )
   }
 
   return (
@@ -54,13 +61,13 @@ export default async function HomePage() {
                 href="/upload"
                 style={{ marginRight: '1rem', background: '#0070f3', color: 'white', padding: '0.5rem 1rem', borderRadius: '5px', textDecoration: 'none' }}
               >
-                Upload Artwork
+                Upload
               </Link>
               <Link
                 href="/profile"
                 style={{ background: '#333', color: 'white', padding: '0.5rem 1rem', borderRadius: '5px', textDecoration: 'none' }}
               >
-                My Profile
+                Profile
               </Link>
             </>
           ) : (
@@ -75,23 +82,20 @@ export default async function HomePage() {
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
-        {posts?.map((post: Post) => {
-          const authorName = post.profiles?.full_name || post.profiles?.username || 'Anonymous'
-          return (
-            <div key={post.id} style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', padding: '0.5rem' }}>
-              <Link href={`/post/${post.id}`} style={{ display: 'block' }}>
-                <img src={post.image_url} alt={post.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
+        {posts?.map((post: Post) => (
+          <div key={post.id} style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', padding: '0.5rem' }}>
+            <Link href={`/post/${post.id}`}>
+              <img src={post.image_url} alt={post.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
+            </Link>
+            <p style={{ textAlign: 'center', marginTop: '0.5rem' }}>{post.title}</p>
+            <small style={{ display: 'block', textAlign: 'center' }}>
+              by{' '}
+              <Link href={`/user/${post.user_id}`} style={{ textDecoration: 'none', color: '#0070f3' }}>
+                Artist {post.user_id?.slice(0, 6)}
               </Link>
-              <p style={{ textAlign: 'center', marginTop: '0.5rem' }}>{post.title}</p>
-              <small style={{ display: 'block', textAlign: 'center' }}>
-                by{' '}
-                <Link href={`/user/${post.user_id}`} style={{ textDecoration: 'none', color: '#0070f3' }}>
-                  {authorName}
-                </Link>
-              </small>
-            </div>
-          )
-        })}
+            </small>
+          </div>
+        ))}
       </div>
 
       {(!posts || posts.length === 0) && (
