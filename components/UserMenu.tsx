@@ -31,11 +31,11 @@ export default function UserMenu() {
     router.push('/');
   };
 
-  if (loading) return <div>...</div>;
+  if (loading) return <div style={{ minWidth: '100px' }}>...</div>;
 
   if (!user) {
     return (
-      <Link href="/login" className="btn-signin">
+      <Link href="/login" style={{ background: '#666', color: 'white', padding: '0.5rem 1rem', borderRadius: '5px', textDecoration: 'none' }}>
         Sign In
       </Link>
     );
@@ -44,11 +44,17 @@ export default function UserMenu() {
   const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
 
   return (
-    <div className="user-menu">
-      <span>Hello, {displayName}</span>
-      <Link href="/profile" className="btn-profile">Profile</Link>
-      <Link href="/upload" className="btn-upload">Upload</Link>
-      <button onClick={handleLogout} className="btn-logout">Logout</button>
+    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+      <span style={{ color: '#333' }}>Hello, {displayName}</span>
+      <Link href="/profile" style={{ background: '#333', color: 'white', padding: '0.5rem 1rem', borderRadius: '5px', textDecoration: 'none' }}>
+        Profile
+      </Link>
+      <Link href="/upload" style={{ background: '#0070f3', color: 'white', padding: '0.5rem 1rem', borderRadius: '5px', textDecoration: 'none' }}>
+        Upload
+      </Link>
+      <button onClick={handleLogout} style={{ background: '#f44336', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '5px', cursor: 'pointer' }}>
+        Logout
+      </button>
     </div>
   );
 }
