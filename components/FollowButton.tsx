@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
 
 export default function FollowButton({ userId }: { userId: string }) {
   const [isFollowing, setIsFollowing] = useState(false);
@@ -52,7 +52,9 @@ export default function FollowButton({ userId }: { userId: string }) {
   };
 
   if (currentUserId === userId) return null;
-  if (!currentUserId) return <Link href="/login" className="btn btn-primary">Sign in to follow</Link>;
+  if (!currentUserId) {
+    return <Link href="/login" className="btn btn-primary">Sign in to follow</Link>;
+  }
 
   return (
     <button onClick={handleClick} disabled={loading} className={`btn ${isFollowing ? 'btn-secondary' : 'btn-primary'}`}>

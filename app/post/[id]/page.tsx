@@ -9,6 +9,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const supabase = await createClient();
 
+  // Пост
   const { data: post, error } = await supabase
     .from('posts')
     .select('*')
@@ -17,6 +18,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 
   if (error || !post) notFound();
 
+  // Профиль автора
   let authorProfile = { full_name: null, username: null, avatar_url: null };
   if (post.user_id) {
     const { data: profile } = await supabase
@@ -27,6 +29,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     if (profile) authorProfile = profile;
   }
 
+  // Текущий пользователь
   const { data: { session } } = await supabase.auth.getSession();
   const isAuthor = session?.user?.id === post.user_id;
   const authorName = authorProfile.full_name || authorProfile.username || 'Anonymous';

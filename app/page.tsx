@@ -6,21 +6,16 @@ import Avatar from '@/components/Avatar';
 export default async function HomePage() {
   const supabase = await createClient();
 
-  // 1. Получаем все посты
-  const { data: posts, error: postsError } = await supabase
+  const { data: posts, error } = await supabase
     .from('posts')
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (postsError) {
-    console.error(postsError);
-    return <div className="container">Error loading posts: {postsError.message}</div>;
+  if (error) {
+    return <div className="container">Error loading posts: {error.message}</div>;
   }
 
-  // 2. Собираем уникальные user_id
   const userIds = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
-
-  // 3. Отдельно получаем профили авторов
   let profilesMap: Record<string, any> = {};
   if (userIds.length) {
     const { data: profiles } = await supabase
