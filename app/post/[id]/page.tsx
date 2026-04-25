@@ -1,87 +1,75 @@
 import { createClient } from '@/lib/supabase-server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Comments from './Comments';
-import LikeButton from '@/components/LikeButton';
 import Avatar from '@/components/Avatar';
-import type { Metadata } from 'next';
+import FollowButton from '@/components/FollowButton';
 
-type Props = {
-  params: Promise<{ id: string }>;
-};
-
-// Динамические мета-теги для каждого поста
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const supabase = await createClient();
-  const { data: post } = await supabase
-    .from('posts')
-    .select('title, image_url, user_id')
-    .eq('id', id)
-    .single();
-
-  if (!post) {
-    return {
-      title: 'Post Not Found',
-    };
-  }
-
-  return {
-    title: `${post.title} | Art Gallery`,
-    description: `View artwork "${post.title}" by ${post.user_id}. Like and comment on this piece.`,
-    openGraph: {
-      title: post.title,
-      description: `Artwork by ${post.user_id}`,
-      images: [post.image_url],
-    },
-  };
-}
-
-export default async function PostPage({ params }: Props) {
+export default async function UserPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: post, error } = await supabase
-    .from('posts')
-    .select('*, likes_count')
+  // Профиль
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
     .eq('id', id)
     .single();
 
-  if (error || !post) notFound();
+  if (profileError || !profile) notFound();
 
-  let authorProfile = { full_name: null, username: null, avatar_url: null };
-  if (post.user_id) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name, username, avatar_url')
-      .eq('id', post.user_id)
-      .single();
-    if (profile) authorProfile = profile;
-  }
-  const authorName = authorProfile.full_name || authorProfile.username || 'Anonymous';
+  // Посты пользователя
+  const { data: posts } = await supabase
+    .from('posts')
+    .select('id, title, image_url, created_at, likes_count')
+    .eq('user_id', id)
+    .order('created_at', { ascending: false });
 
-  const { data: { session } } = await supabase.auth.getSession();
-  const isAuthor = session?.user?.id === post.user_id;
+  // Количество подписчиков
+  const { count: followersCount } = await supabase
+    .from('follows')
+    .select('id', { count: 'exact', head: true })
+    .eq('following_id', id);
+
+  // Количество подписок (кого подписан)
+  const { count: followingCount } = await supabase
+    .from('follows')
+    .select('id', { count: 'exact', head: true })
+    .eq('follower_id', id);
+
+  const authorName = profile.full_name || profile.username || 'Anonymous';
+  const isCurrentUser = false; // определим на клиенте через FollowButton
 
   return (
     <div className="container">
-      <div className="post-page">
-        <Link href="/" className="btn btn-outline" style={{ marginBottom: '1rem', display: 'inline-block' }}>← Back</Link>
-        <h1 className="post-title">{post.title}</h1>
-        <img src={post.image_url} alt={post.title} className="post-image" />
-        <div className="post-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <Avatar url={authorProfile.avatar_url} size={32} />
-          <div>by {authorName}</div>
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
-            {isAuthor && (
-              <Link href={`/post/${post.id}/edit`} className="btn btn-secondary" style={{ fontSize: '0.8rem' }}>
-                Edit
-              </Link>
-            )}
+      <Link href="/" className="btn btn-outline" style={{ marginBottom: '1rem', display: 'inline-block' }}>← Back</Link>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+        <Avatar url={profile.avatar_url} size={80} />
+        <div>
+          <h1>{authorName}</h1>
+          <p>@{profile.username}</p>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+            <span><strong>{followersCount || 0}</strong> followers</span>
+            <span><strong>{followingCount || 0}</strong> following</span>
           </div>
         </div>
-        <Comments postId={post.id} />
+      </div>
+      <FollowButton userId={id} />
+
+      {profile.bio && <p style={{ marginTop: '1rem' }}>{profile.bio}</p>}
+
+      <h2 style={{ marginTop: '2rem' }}>Artworks ({posts?.length || 0})</h2>
+      <div className="gallery">
+        {posts?.map(post => (
+          <div key={post.id} className="card">
+            <Link href={`/post/${post.id}`}>
+              <img src={post.image_url} alt={post.title} />
+            </Link>
+            <div className="card-content">
+              <div className="card-title">{post.title}</div>
+              <div className="card-actions">❤️ {post.likes_count || 0}</div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

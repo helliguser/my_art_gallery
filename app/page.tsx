@@ -29,18 +29,28 @@ export default function HomePage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebounce(searchTerm, 500);
+  const [feedType, setFeedType] = useState<'all' | 'following'>('all');
+  const [session, setSession] = useState<any>(null);
 
-  // Сброс при изменении поиска
+  useEffect(() => {
+    // Получаем сессию для проверки авторизации
+    fetch('/api/auth/session')
+      .then(res => res.json())
+      .catch(() => null);
+    // Упростим: будем передавать параметр following=true в API
+  }, []);
+
   useEffect(() => {
     setPosts([]);
     setPage(1);
     setHasMore(true);
-    fetchPosts(1, debouncedSearch);
-  }, [debouncedSearch]);
+    fetchPosts(1, debouncedSearch, feedType);
+  }, [debouncedSearch, feedType]);
 
-  const fetchPosts = async (pageNum: number, search: string) => {
+  const fetchPosts = async (pageNum: number, search: string, type: 'all' | 'following') => {
     setLoading(true);
-    const res = await fetch(`/api/posts?page=${pageNum}&limit=12&search=${encodeURIComponent(search)}`);
+    const url = `/api/posts?page=${pageNum}&limit=12&search=${encodeURIComponent(search)}&following=${type === 'following'}`;
+    const res = await fetch(url);
     const data = await res.json();
     if (data.error) {
       console.error(data.error);
@@ -57,13 +67,13 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    fetchPosts(1, '').finally(() => setInitialLoading(false));
+    fetchPosts(1, '', 'all').finally(() => setInitialLoading(false));
   }, []);
 
   const loadMore = async () => {
     const nextPage = page + 1;
     setPage(nextPage);
-    await fetchPosts(nextPage, debouncedSearch);
+    await fetchPosts(nextPage, debouncedSearch, feedType);
   };
 
   if (initialLoading) {
@@ -76,7 +86,24 @@ export default function HomePage() {
         <h1 className="logo">Art Gallery</h1>
         <UserMenu />
       </header>
-      {/* Строка поиска */}
+
+      {/* Переключатель ленты */}
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+        <button
+          onClick={() => setFeedType('all')}
+          className={`btn ${feedType === 'all' ? 'btn-primary' : 'btn-outline'}`}
+        >
+          All Artworks
+        </button>
+        <button
+          onClick={() => setFeedType('following')}
+          className={`btn ${feedType === 'following' ? 'btn-primary' : 'btn-outline'}`}
+        >
+          Following
+        </button>
+      </div>
+
+      {/* Поиск */}
       <div style={{ marginBottom: '1.5rem' }}>
         <input
           type="text"
@@ -92,6 +119,7 @@ export default function HomePage() {
           }}
         />
       </div>
+
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
         {posts.length === 0 && !loading && <p style={{ textAlign: 'center' }}>No artworks found.</p>}
         <div className="gallery">
