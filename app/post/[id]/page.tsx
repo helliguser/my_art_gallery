@@ -8,13 +8,12 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const supabase = await createClient();
 
-  // Профиль
+  // Профиль пользователя
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', id)
     .single();
-
   if (profileError || !profile) notFound();
 
   // Посты пользователя
@@ -30,14 +29,18 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
     .select('id', { count: 'exact', head: true })
     .eq('following_id', id);
 
-  // Количество подписок (кого подписан)
+  // Количество подписок
   const { count: followingCount } = await supabase
     .from('follows')
     .select('id', { count: 'exact', head: true })
     .eq('follower_id', id);
 
+  // Текущий пользователь
+  const { data: { session } } = await supabase.auth.getSession();
+  const currentUserId = session?.user?.id;
+  const isOwnProfile = currentUserId === id;
+
   const authorName = profile.full_name || profile.username || 'Anonymous';
-  const isCurrentUser = false; // определим на клиенте через FollowButton
 
   return (
     <div className="container">
@@ -53,7 +56,18 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
           </div>
         </div>
       </div>
-      <FollowButton userId={id} />
+
+      {/* Кнопка Follow */}
+      {!isOwnProfile && currentUserId && (
+        <div style={{ marginBottom: '1rem' }}>
+          <FollowButton userId={id} />
+        </div>
+      )}
+      {!currentUserId && (
+        <div style={{ marginBottom: '1rem' }}>
+          <Link href="/login" className="btn btn-primary">Sign in to follow</Link>
+        </div>
+      )}
 
       {profile.bio && <p style={{ marginTop: '1rem' }}>{profile.bio}</p>}
 
