@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Comments from './Comments';
+import LikeButton from '@/components/LikeButton';
 
 async function createClient() {
   const cookieStore = await cookies();
@@ -18,13 +19,17 @@ async function createClient() {
   );
 }
 
-export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
+type PageProps = {
+  params: Promise<{ id: string }> | { id: string };
+};
+
+export default async function PostPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
 
   const { data: post, error } = await supabase
     .from('posts')
-    .select('*')
+    .select('*, likes_count')
     .eq('id', id)
     .single();
 
@@ -46,7 +51,12 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         <Link href="/" className="btn btn-outline" style={{ marginBottom: '1rem', display: 'inline-block' }}>← Back</Link>
         <h1 className="post-title">{post.title}</h1>
         <img src={post.image_url} alt={post.title} className="post-image" />
-        <div className="post-meta">by {authorName}</div>
+        <div className="post-meta">
+          by {authorName}
+          <div style={{ marginTop: '0.5rem' }}>
+            <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
+          </div>
+        </div>
         <Comments postId={post.id} />
       </div>
     </div>

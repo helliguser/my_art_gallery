@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import UserMenu from '@/components/UserMenu';
+import LikeButton from '@/components/LikeButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,11 +20,20 @@ async function createClient() {
   );
 }
 
+type Post = {
+  id: number;
+  title: string;
+  image_url: string;
+  created_at: string;
+  user_id: string;
+  likes_count: number;
+};
+
 export default async function HomePage() {
   const supabase = await createClient();
   const { data: posts, error } = await supabase
     .from('posts')
-    .select('*')
+    .select('*, likes_count')
     .order('created_at', { ascending: false });
 
   if (error) return <div className="container">Error loading gallery</div>;
@@ -45,7 +55,7 @@ export default async function HomePage() {
         <UserMenu />
       </header>
       <div className="gallery">
-        {posts.map(post => {
+        {posts.map((post: Post) => {
           const profile = profilesMap[post.user_id];
           const authorName = profile?.full_name || profile?.username || 'Anonymous';
           return (
@@ -60,6 +70,9 @@ export default async function HomePage() {
                   <Link href={`/user/${post.user_id}`}>
                     {authorName}
                   </Link>
+                </div>
+                <div className="card-actions">
+                  <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
                 </div>
               </div>
             </div>
