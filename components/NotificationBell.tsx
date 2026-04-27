@@ -11,15 +11,17 @@ type Notification = {
   actor_id: string;
   is_read: boolean;
   created_at: string;
-  actor?: {
-    full_name: string | null;
-    username: string | null;
-    avatar_url: string | null;
-  };
+};
+
+type Profile = {
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
 };
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [profilesMap, setProfilesMap] = useState<Record<string, Profile>>({});
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -34,55 +36,47 @@ export default function NotificationBell() {
     if (!userId) return;
 
     const fetchNotifications = async () => {
-      // Сначала получаем уведомления
+      // 1. Получаем уведомления
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20);
+
       if (error) {
-        console.error(error);
-        return;
-      }
-      if (!data || data.length === 0) {
-        setNotifications([]);
-        setUnreadCount(0);
+        console.error('Error fetching notifications:', error);
         return;
       }
 
-      // Затем получаем профили авторов (actor) отдельно
-      const actorIds = [...new Set(data.map(n => n.actor_id).filter(Boolean))];
-      let actorsMap: Record<string, any> = {};
+      setNotifications(data || []);
+      setUnreadCount(data?.filter(n => !n.is_read).length || 0);
+
+      // 2. Отдельно загружаем профили акторов (для имён)
+      const actorIds = [...new Set(data?.map(n => n.actor_id).filter(Boolean) || [])];
       if (actorIds.length) {
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, full_name, username, avatar_url')
           .in('id', actorIds);
         if (profiles) {
-          actorsMap = Object.fromEntries(profiles.map(p => [p.id, p]));
+          const map: Record<string, Profile> = {};
+          profiles.forEach(p => {
+            map[p.id] = { full_name: p.full_name, username: p.username, avatar_url: p.avatar_url };
+          });
+          setProfilesMap(map);
         }
       }
-
-      const enriched = data.map(n => ({
-        ...n,
-        actor: actorsMap[n.actor_id] || null,
-      }));
-      setNotifications(enriched);
-      setUnreadCount(enriched.filter(n => !n.is_read).length);
     };
 
     fetchNotifications();
 
-    // Подписка на новые уведомления (realtime)
+    // Realtime подписка на новые уведомления
     const subscription = supabase
       .channel('notifications-channel')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
-        // При вставке нового уведомления добавим его в список
-        const newNotif = payload.new as Notification;
-        setNotifications(prev => [newNotif, ...prev]);
+        setNotifications(prev => [payload.new as Notification, ...prev]);
         setUnreadCount(prev => prev + 1);
-        // Можно также подгрузить профиль актора отдельно, но для простоты пока так
-        fetchNotifications(); // Более надёжно просто обновить весь список
       })
       .subscribe();
 
@@ -116,7 +110,8 @@ export default function NotificationBell() {
   };
 
   const getNotificationText = (notif: Notification) => {
-    const actorName = notif.actor?.full_name || notif.actor?.username || 'Someone';
+    const actor = profilesMap[notif.actor_id] || {};
+    const actorName = actor.full_name || actor.username || 'Someone';
     switch (notif.type) {
       case 'like':
         return `${actorName} liked your post`;
