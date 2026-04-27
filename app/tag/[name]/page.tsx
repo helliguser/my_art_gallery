@@ -1,73 +1,91 @@
-import { createClient } from '@supabase/supabase-js';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
 import UserMenu from '@/components/UserMenu';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-type PageProps = {
-  params: Promise<{ name: string }>;
+type Post = {
+  id: number;
+  title: string;
+  image_url: string;
+  user_id: string;
+  likes_count: number;
+  views: number;
+  profile: {
+    full_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
 };
 
-export default async function TagPage({ params }: PageProps) {
-  const { name } = await params;
-  const tagName = decodeURIComponent(name);
+export default function TagPage({ params }: { params: Promise<{ name: string }> }) {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tagName, setTagName] = useState('');
 
-  // Ищем тег (без учёта регистра)
-  const { data: tag } = await supabase
-    .from('tags')
-    .select('id, name')
-    .ilike('name', tagName)
-    .maybeSingle();
+  useEffect(() => {
+    params.then(({ name }) => {
+      setTagName(decodeURIComponent(name));
+    });
+  }, [params]);
 
-  if (!tag) {
-    return (
-      <div className="container">
-        <header className="header">
-          <h1 className="logo">Art Gallery</h1>
-          <UserMenu />
-        </header>
-        <p>Tag "{tagName}" not found.</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!tagName) return;
+    const fetchPostsByTag = async () => {
+      setLoading(true);
+      // Ищем тег
+      const { data: tag } = await supabase
+        .from('tags')
+        .select('id')
+        .ilike('name', tagName)
+        .maybeSingle();
+      if (!tag) {
+        setPosts([]);
+        setLoading(false);
+        return;
+      }
+      // Получаем post_ids
+      const { data: postTags } = await supabase
+        .from('post_tags')
+        .select('post_id')
+        .eq('tag_id', tag.id);
+      const postIds = postTags?.map(pt => pt.post_id) || [];
+      if (postIds.length === 0) {
+        setPosts([]);
+        setLoading(false);
+        return;
+      }
+      // Загружаем посты и профили
+      const { data: postsData } = await supabase
+        .from('posts')
+        .select('*, profiles(full_name, username, avatar_url)')
+        .in('id', postIds)
+        .order('created_at', { ascending: false });
+      const enriched = (postsData || []).map(p => ({
+        ...p,
+        profile: p.profiles,
+      }));
+      setPosts(enriched);
+      setLoading(false);
+    };
+    fetchPostsByTag();
+  }, [tagName]);
 
-  // Получаем все post_id для тега
-  const { data: postTags } = await supabase
-    .from('post_tags')
-    .select('post_id')
-    .eq('tag_id', tag.id);
-
-  const postIds = postTags?.map(pt => pt.post_id) || [];
-  let posts: any[] = [];
-  if (postIds.length) {
-    const { data } = await supabase
-      .from('posts')
-      .select('*, profiles(full_name, username, avatar_url)')
-      .in('id', postIds)
-      .order('created_at', { ascending: false });
-    posts = data || [];
-  }
-
-  const enriched = posts.map(post => ({
-    ...post,
-    profile: post.profiles,
-  }));
+  if (loading) return <div className="container">Loading...</div>;
 
   return (
     <div className="container">
       <header className="header">
-        <h1 className="logo">Art Gallery – #{tag.name}</h1>
+        <h1 className="logo">Art Gallery – #{tagName}</h1>
         <UserMenu />
       </header>
-      {enriched.length === 0 ? (
-        <p>No artworks with tag #{tag.name}</p>
+      {posts.length === 0 ? (
+        <p>No artworks with tag #{tagName}</p>
       ) : (
         <div className="gallery">
-          {enriched.map(post => (
+          {posts.map(post => (
             <div key={post.id} className="card">
               <Link href={`/post/${post.id}`}>
                 <img src={post.image_url} alt={post.title} />
