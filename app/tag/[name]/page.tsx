@@ -1,7 +1,12 @@
-import { createClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
 import UserMenu from '@/components/UserMenu';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 type PageProps = {
   params: Promise<{ name: string }>;
@@ -9,13 +14,12 @@ type PageProps = {
 
 export default async function TagPage({ params }: PageProps) {
   const { name } = await params;
-  const supabase = await createClient();
   const tagName = decodeURIComponent(name);
 
-  // Ищем тег без учёта регистра
+  // Ищем тег (без учёта регистра)
   const { data: tag } = await supabase
     .from('tags')
-    .select('id')
+    .select('id, name')
     .ilike('name', tagName)
     .maybeSingle();
 
@@ -31,13 +35,13 @@ export default async function TagPage({ params }: PageProps) {
     );
   }
 
-  // Получаем все post_id для этого тега
+  // Получаем все post_id для тега
   const { data: postTags } = await supabase
     .from('post_tags')
     .select('post_id')
     .eq('tag_id', tag.id);
-  const postIds = postTags?.map(pt => pt.post_id) || [];
 
+  const postIds = postTags?.map(pt => pt.post_id) || [];
   let posts: any[] = [];
   if (postIds.length) {
     const { data } = await supabase
@@ -48,7 +52,6 @@ export default async function TagPage({ params }: PageProps) {
     posts = data || [];
   }
 
-  // Приводим к формату, ожидаемому компонентом Avatar (profile)
   const enriched = posts.map(post => ({
     ...post,
     profile: post.profiles,
@@ -57,11 +60,11 @@ export default async function TagPage({ params }: PageProps) {
   return (
     <div className="container">
       <header className="header">
-        <h1 className="logo">Art Gallery – #{tagName}</h1>
+        <h1 className="logo">Art Gallery – #{tag.name}</h1>
         <UserMenu />
       </header>
       {enriched.length === 0 ? (
-        <p>No artworks with tag #{tagName}</p>
+        <p>No artworks with tag #{tag.name}</p>
       ) : (
         <div className="gallery">
           {enriched.map(post => (
