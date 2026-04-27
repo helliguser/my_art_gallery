@@ -10,16 +10,14 @@ type PageProps = {
 export default async function TagPage({ params }: PageProps) {
   const { name } = await params;
   const supabase = await createClient();
-
-  // Декодируем имя тега (например, "cat%20art" -> "cat art")
   const tagName = decodeURIComponent(name);
 
-  // Находим тег по имени
+  // Ищем тег (без учёта регистра)
   const { data: tag, error: tagError } = await supabase
     .from('tags')
     .select('id, name')
-    .eq('name', tagName)
-    .single();
+    .ilike('name', tagName)
+    .maybeSingle();
 
   if (tagError || !tag) {
     return (
