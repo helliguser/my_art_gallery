@@ -11,16 +11,29 @@ export default async function TagPage({ params }: PageProps) {
   const { name } = await params;
   const supabase = await createClient();
 
-  const { data: tag } = await supabase
+  // Декодируем имя тега (например, "cat%20art" -> "cat art")
+  const tagName = decodeURIComponent(name);
+
+  // Находим тег по имени
+  const { data: tag, error: tagError } = await supabase
     .from('tags')
-    .select('id')
-    .eq('name', decodeURIComponent(name))
+    .select('id, name')
+    .eq('name', tagName)
     .single();
 
-  if (!tag) {
-    return <div className="container">Tag not found</div>;
+  if (tagError || !tag) {
+    return (
+      <div className="container">
+        <header className="header">
+          <h1 className="logo">Art Gallery</h1>
+          <UserMenu />
+        </header>
+        <p>Tag "{tagName}" not found.</p>
+      </div>
+    );
   }
 
+  // Получаем все посты с этим тегом
   const { data: postTags } = await supabase
     .from('post_tags')
     .select('post_id')
@@ -40,28 +53,31 @@ export default async function TagPage({ params }: PageProps) {
   return (
     <div className="container">
       <header className="header">
-        <h1 className="logo">Art Gallery – #{name}</h1>
+        <h1 className="logo">Art Gallery – #{tag.name}</h1>
         <UserMenu />
       </header>
-      <div className="gallery">
-        {posts.map(post => (
-          <div key={post.id} className="card">
-            <Link href={`/post/${post.id}`}>
-              <img src={post.image_url} alt={post.title} />
-            </Link>
-            <div className="card-content">
-              <div className="card-title">{post.title}</div>
-              <div className="card-author">
-                <Avatar url={post.profiles?.avatar_url} size={24} />
-                <Link href={`/user/${post.user_id}`}>
-                  {post.profiles?.full_name || post.profiles?.username || 'Anonymous'}
-                </Link>
+      {posts.length === 0 ? (
+        <p>No artworks with tag #{tag.name}</p>
+      ) : (
+        <div className="gallery">
+          {posts.map(post => (
+            <div key={post.id} className="card">
+              <Link href={`/post/${post.id}`}>
+                <img src={post.image_url} alt={post.title} />
+              </Link>
+              <div className="card-content">
+                <div className="card-title">{post.title}</div>
+                <div className="card-author">
+                  <Avatar url={post.profiles?.avatar_url} size={24} />
+                  <Link href={`/user/${post.user_id}`}>
+                    {post.profiles?.full_name || post.profiles?.username || 'Anonymous'}
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-      {posts.length === 0 && <p>No artworks with tag #{name}</p>}
+          ))}
+        </div>
+      )}
     </div>
   );
 }

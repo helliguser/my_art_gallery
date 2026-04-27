@@ -9,10 +9,10 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const supabase = await createClient();
 
-  // Увеличиваем счётчик просмотров (один раз за загрузку)
+  // Увеличиваем счётчик просмотров
   await supabase.rpc('increment_post_views', { post_id: parseInt(id) });
 
-  // Получаем пост с актуальными данными (включая обновлённые просмотры)
+  // Получаем пост
   const { data: post, error } = await supabase
     .from('posts')
     .select('*')
@@ -21,7 +21,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 
   if (error || !post) notFound();
 
-  // Получаем профиль автора
+  // Получаем автора
   let authorProfile = { full_name: null, username: null, avatar_url: null };
   if (post.user_id) {
     const { data: profile } = await supabase
@@ -31,6 +31,13 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       .single();
     if (profile) authorProfile = profile;
   }
+
+  // Получаем теги этого поста
+  const { data: postTags } = await supabase
+    .from('post_tags')
+    .select('tag_id, tags(name)')
+    .eq('post_id', post.id);
+  const tags = postTags?.map(pt => (pt.tags as any).name) || [];
 
   const { data: { session } } = await supabase.auth.getSession();
   const isAuthor = session?.user?.id === post.user_id;
@@ -45,7 +52,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         <div className="post-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <Avatar url={authorProfile.avatar_url} size={32} />
           <div>by {authorName}</div>
-          <div style={{ display: 'flex', gap: '1rem', marginLeft: 'auto' }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <span>👁️ {post.views || 0}</span>
             <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
             {isAuthor && (
@@ -55,6 +62,23 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
             )}
           </div>
         </div>
+
+        {/* Отображение тегов */}
+        {tags.length > 0 && (
+          <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {tags.map(tag => (
+              <Link
+                key={tag}
+                href={`/tag/${encodeURIComponent(tag)}`}
+                className="btn btn-outline"
+                style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
+              >
+                #{tag}
+              </Link>
+            ))}
+          </div>
+        )}
+
         <Comments postId={post.id} />
       </div>
     </div>
