@@ -11,13 +11,14 @@ export default function FollowButton({ userId }: { userId: string }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('FollowButton: session user id', session?.user?.id);
       setCurrentUserId(session?.user?.id || null);
     });
   }, []);
 
   useEffect(() => {
     if (!currentUserId || currentUserId === userId) return;
-    const check = async () => {
+    const checkFollow = async () => {
       const { data } = await supabase
         .from('follows')
         .select('id')
@@ -26,7 +27,7 @@ export default function FollowButton({ userId }: { userId: string }) {
         .maybeSingle();
       setIsFollowing(!!data);
     };
-    check();
+    checkFollow();
   }, [currentUserId, userId]);
 
   const handleClick = async () => {
@@ -52,9 +53,7 @@ export default function FollowButton({ userId }: { userId: string }) {
   };
 
   if (currentUserId === userId) return null;
-  if (!currentUserId) {
-    return <Link href="/login" className="btn btn-primary">Sign in to follow</Link>;
-  }
+  if (!currentUserId) return <Link href="/login" className="btn btn-primary">Sign in to follow</Link>;
 
   return (
     <button onClick={handleClick} disabled={loading} className={`btn ${isFollowing ? 'btn-secondary' : 'btn-primary'}`}>

@@ -9,16 +9,18 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    async function checkUserLike() {
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      supabase
+      const { data } = await supabase
         .from('likes')
         .select('id')
         .eq('post_id', postId)
         .eq('user_id', session.user.id)
-        .maybeSingle()
-        .then(({ data }) => setUserLiked(!!data));
-    });
+        .maybeSingle();
+      setUserLiked(!!data);
+    }
+    checkUserLike();
   }, [postId]);
 
   const handleLike = async () => {
@@ -39,6 +41,8 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       if (!error) {
         setLikes(prev => prev - 1);
         setUserLiked(false);
+      } else {
+        alert('Error: ' + error.message);
       }
     } else {
       const { error } = await supabase
@@ -47,13 +51,15 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       if (!error) {
         setLikes(prev => prev + 1);
         setUserLiked(true);
+      } else {
+        alert('Error: ' + error.message);
       }
     }
     setLoading(false);
   };
 
   return (
-    <button onClick={handleLike} disabled={loading} className="like-button" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>
+    <button onClick={handleLike} disabled={loading} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>
       {userLiked ? '❤️' : '🤍'} {likes}
     </button>
   );
