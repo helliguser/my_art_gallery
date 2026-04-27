@@ -1,6 +1,18 @@
 /* app/globals.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-/* CSS переменные для светлой темы */
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Светлая тема (по умолчанию) */
 :root {
   --bg: #fafafa;
   --text: #1a1a1a;
@@ -10,39 +22,22 @@
   --btn-outline-border: #ccc;
   --btn-outline-hover: #f0f0f0;
   --input-border: #ccc;
-  --shadow: rgba(0,0,0,0.1);
-  --shadow-hover: rgba(0,0,0,0.12);
-  --like-active: #f44336;
-  --link: #0070f3;
+  --shadow: 0 2px 8px rgba(0,0,0,0.1);
+  --shadow-hover: 0 8px 20px rgba(0,0,0,0.12);
 }
 
-/* Тёмная тема (активируется атрибутом data-theme="dark") */
+/* Тёмная тема */
 [data-theme="dark"] {
-  --bg: #121212;
-  --text: #f0f0f0;
-  --card-bg: #1e1e1e;
-  --border: #333;
-  --header-border: #333;
-  --btn-outline-border: #555;
-  --btn-outline-hover: #2a2a2a;
-  --input-border: #444;
-  --shadow: rgba(0,0,0,0.3);
-  --shadow-hover: rgba(0,0,0,0.4);
-  --like-active: #ff6b6b;
-  --link: #4da8ff;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  transition: background-color 0.3s, color 0.3s;
+  --bg: #1a1a1a;
+  --text: #fafafa;
+  --card-bg: #2d2d2d;
+  --border: #444;
+  --header-border: #444;
+  --btn-outline-border: #666;
+  --btn-outline-hover: #3a3a3a;
+  --input-border: #555;
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-hover: 0 8px 20px rgba(0,0,0,0.4);
 }
 
 .container {
@@ -131,12 +126,13 @@ body {
   background: var(--card-bg);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px var(--shadow);
+  box-shadow: var(--shadow);
   transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--border);
 }
 .card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px var(--shadow-hover);
+  box-shadow: var(--shadow-hover);
 }
 .card img {
   width: 100%;
@@ -164,7 +160,7 @@ body {
   flex-wrap: wrap;
 }
 .card-author a {
-  color: var(--link);
+  color: #0070f3;
   text-decoration: none;
 }
 .card-author img {
@@ -188,7 +184,8 @@ body {
   background: var(--card-bg);
   border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 2px 12px var(--shadow);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
 }
 .post-image {
   width: 100%;
@@ -236,7 +233,7 @@ textarea {
   background: var(--card-bg);
   border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 2px 12px var(--shadow);
+  box-shadow: var(--shadow);
 }
 
 /* Меню пользователя */
@@ -264,6 +261,29 @@ textarea {
 }
 .like-button:hover {
   transform: scale(1.05);
+}
+
+/* Уведомления */
+.notification-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+}
+
+.notification-item-unread {
+  background-color: rgba(0,112,243,0.05);
+}
+
+.notification-item-read {
+  background-color: transparent;
 }
 
 /* Адаптивность */
