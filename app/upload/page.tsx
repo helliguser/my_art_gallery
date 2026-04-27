@@ -8,6 +8,7 @@ import Link from 'next/link';
 export default function UploadPage() {
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [tags, setTags] = useState('');
   const [uploading, setUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [user, setUser] = useState<any>(null);
@@ -16,11 +17,8 @@ export default function UploadPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.push('/login?redirect_to=/upload');
-      } else {
-        setUser(session.user);
-      }
+      if (!session) router.push('/login?redirect_to=/upload');
+      else setUser(session.user);
       setLoading(false);
     });
   }, [router]);
@@ -33,7 +31,6 @@ export default function UploadPage() {
     const { error: uploadError } = await supabase.storage
       .from('images')
       .upload(fileName, file);
-
     if (uploadError) {
       alert('Upload error: ' + uploadError.message);
       setUploading(false);
@@ -44,14 +41,36 @@ export default function UploadPage() {
       .from('images')
       .getPublicUrl(fileName);
 
-    const { error: insertError } = await supabase.from('posts').insert([
-      { title, image_url: publicUrl, user_id: user.id },
-    ]);
+    // Вставка поста
+    const { data: post, error: insertError } = await supabase
+      .from('posts')
+      .insert({ title, image_url: publicUrl, user_id: user.id })
+      .select()
+      .single();
 
     if (insertError) {
       alert('Database error: ' + insertError.message);
       setUploading(false);
       return;
+    }
+    if (!post) {
+      alert('Failed to create post');
+      setUploading(false);
+      return;
+    }
+
+    // Обработка тегов
+    if (tags.trim()) {
+      const tagList = tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+      for (const t of tagList) {
+        const { data: tagId, error: tagError } = await supabase.rpc('get_or_create_tag', { tag_name: t });
+        if (!tagError && tagId) {
+          await supabase
+            .from('post_tags')
+            .insert({ post_id: post.id, tag_id: tagId })
+            .maybeSingle();
+        }
+      }
     }
 
     setImageUrl(publicUrl);
@@ -59,6 +78,7 @@ export default function UploadPage() {
     alert('Artwork published!');
     setTitle('');
     setFile(null);
+    setTags('');
   };
 
   if (loading) return <div className="container">Loading...</div>;
@@ -68,18 +88,33 @@ export default function UploadPage() {
     <div className="container">
       <header className="header">
         <h1 className="logo">Upload New Artwork</h1>
-        <Link href="/" className="btn btn-outline">← Back to Gallery</Link>
+        <Link href="/" className="btn btn-outline">← Back</Link>
       </header>
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
         <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="title">Title</label>
-          <input id="title" type="text" placeholder="Title of your work" value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }} />
+          <label>Title</label>
+          <input
+            type="text"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem' }}
+          />
         </div>
         <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="file">Image file</label>
-          <input id="file" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} style={{ display: 'block', marginBottom: '1rem' }} />
+          <label>Tags (comma separated)</label>
+          <input
+            type="text"
+            value={tags}
+            onChange={e => setTags(e.target.value)}
+            placeholder="e.g. cat, digital, portrait"
+            style={{ width: '100%', padding: '0.5rem' }}
+          />
         </div>
-        <button onClick={handleUpload} disabled={uploading || !title || !file} className="btn btn-primary" style={{ width: '100%' }}>
+        <div style={{ marginBottom: '1rem' }}>
+          <label>Image file</label>
+          <input type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} />
+        </div>
+        <button onClick={handleUpload} disabled={uploading || !title || !file} className="btn btn-primary">
           {uploading ? 'Uploading...' : 'Publish'}
         </button>
         {imageUrl && (

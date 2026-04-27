@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '12');
   const search = searchParams.get('search') || '';
+  const tag = searchParams.get('tag') || '';
   const following = searchParams.get('following') === 'true';
   const userId = searchParams.get('userId');
   const start = (page - 1) * limit;
@@ -20,12 +21,34 @@ export async function GET(request: NextRequest) {
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false });
 
+  // Фильтр по тегу
+  if (tag) {
+    const { data: tagData } = await supabase
+      .from('tags')
+      .select('id')
+      .eq('name', tag)
+      .maybeSingle();
+    if (!tagData) {
+      return NextResponse.json({ posts: [], total: 0, page, totalPages: 0 });
+    }
+    const { data: postTags } = await supabase
+      .from('post_tags')
+      .select('post_id')
+      .eq('tag_id', tagData.id);
+    const postIds = postTags?.map(pt => pt.post_id) || [];
+    if (postIds.length === 0) {
+      return NextResponse.json({ posts: [], total: 0, page, totalPages: 0 });
+    }
+    query = query.in('id', postIds);
+  }
+
+  // Поиск по заголовку
   if (search) {
     query = query.ilike('title', `%${search}%`);
   }
 
+  // Лента подписок
   if (following && userId) {
-    // Получаем подписки пользователя
     const { data: follows } = await supabase
       .from('follows')
       .select('following_id')

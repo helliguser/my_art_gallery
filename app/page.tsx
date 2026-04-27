@@ -30,40 +30,58 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [tagTerm, setTagTerm] = useState('');
   const [debouncedSearch] = useDebounce(searchTerm, 500);
+  const [debouncedTag] = useDebounce(tagTerm, 500);
   const [feedType, setFeedType] = useState<'all' | 'following'>('all');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [popularTags, setPopularTags] = useState<{ name: string; count: number }[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const userId = session?.user?.id || null;
-      setCurrentUserId(userId);
-      setIsLoggedIn(!!userId);
+      setCurrentUserId(session?.user?.id || null);
+      setIsLoggedIn(!!session);
     });
+  }, []);
+
+  // Загружаем популярные теги
+  useEffect(() => {
+    const fetchPopularTags = async () => {
+      const { data } = await supabase
+        .from('post_tags')
+        .select('tags!inner(name)');
+      if (!data) return;
+      const counts: Record<string, number> = {};
+      for (const item of data) {
+        const name = (item as any).tags.name;
+        counts[name] = (counts[name] || 0) + 1;
+      }
+      const popular = Object.entries(counts)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+      setPopularTags(popular);
+    };
+    fetchPopularTags();
   }, []);
 
   useEffect(() => {
     setPosts([]);
     setPage(1);
     setHasMore(true);
-    fetchPosts(1, debouncedSearch, feedType);
-  }, [debouncedSearch, feedType]);
+    fetchPosts(1, debouncedSearch, debouncedTag, feedType);
+  }, [debouncedSearch, debouncedTag, feedType]);
 
-  const fetchPosts = async (pageNum: number, search: string, type: 'all' | 'following') => {
+  const fetchPosts = async (pageNum: number, search: string, tag: string, type: 'all' | 'following') => {
     setLoading(true);
     let url = `/api/posts?page=${pageNum}&limit=12&search=${encodeURIComponent(search)}&following=${type === 'following'}`;
-    if (type === 'following' && currentUserId) {
-      url += `&userId=${currentUserId}`;
-    }
+    if (tag) url += `&tag=${encodeURIComponent(tag)}`;
+    if (type === 'following' && currentUserId) url += `&userId=${currentUserId}`;
     try {
       const res = await fetch(url);
       const data = await res.json();
-      if (data.error) {
-        console.error(data.error);
-        setLoading(false);
-        return;
-      }
+      if (data.error) throw new Error(data.error);
       setPosts(prev => (pageNum === 1 ? data.posts : [...prev, ...data.posts]));
       setHasMore(pageNum < data.totalPages);
     } catch (err) {
@@ -73,13 +91,13 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    fetchPosts(1, '', 'all').finally(() => setInitialLoading(false));
+    fetchPosts(1, '', '', 'all').finally(() => setInitialLoading(false));
   }, []);
 
   const loadMore = async () => {
     const nextPage = page + 1;
     setPage(nextPage);
-    await fetchPosts(nextPage, debouncedSearch, feedType);
+    await fetchPosts(nextPage, debouncedSearch, debouncedTag, feedType);
   };
 
   if (initialLoading) return <div className="container">Loading...</div>;
@@ -108,26 +126,42 @@ export default function HomePage() {
         )}
       </div>
 
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
         <input
           type="text"
           placeholder="Search by title..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '0.75rem',
-            borderRadius: '8px',
-            border: '1px solid #ccc',
-            fontSize: '1rem',
-          }}
+          onChange={e => setSearchTerm(e.target.value)}
+          style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--input-border)' }}
+        />
+        <input
+          type="text"
+          placeholder="Search by tag..."
+          value={tagTerm}
+          onChange={e => setTagTerm(e.target.value)}
+          style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--input-border)' }}
         />
       </div>
+
+      {popularTags.length > 0 && (
+        <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          {popularTags.map(tag => (
+            <button
+              key={tag.name}
+              onClick={() => setTagTerm(tag.name)}
+              className="btn btn-outline"
+              style={{ fontSize: '0.8rem' }}
+            >
+              {tag.name} ({tag.count})
+            </button>
+          ))}
+        </div>
+      )}
 
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
         {posts.length === 0 && !loading && <p style={{ textAlign: 'center' }}>No artworks found.</p>}
         <div className="gallery">
-          {posts.map((post) => {
+          {posts.map(post => {
             const authorName = post.profile?.full_name || post.profile?.username || 'Anonymous';
             return (
               <div key={post.id} className="card">
