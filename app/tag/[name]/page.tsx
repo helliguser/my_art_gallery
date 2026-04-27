@@ -12,14 +12,14 @@ export default async function TagPage({ params }: PageProps) {
   const supabase = await createClient();
   const tagName = decodeURIComponent(name);
 
-  // Ищем тег (без учёта регистра)
-  const { data: tag, error: tagError } = await supabase
+  // Ищем тег без учёта регистра
+  const { data: tag } = await supabase
     .from('tags')
-    .select('id, name')
+    .select('id')
     .ilike('name', tagName)
     .maybeSingle();
 
-  if (tagError || !tag) {
+  if (!tag) {
     return (
       <div className="container">
         <header className="header">
@@ -31,13 +31,13 @@ export default async function TagPage({ params }: PageProps) {
     );
   }
 
-  // Получаем все посты с этим тегом
+  // Получаем все post_id для этого тега
   const { data: postTags } = await supabase
     .from('post_tags')
     .select('post_id')
     .eq('tag_id', tag.id);
-
   const postIds = postTags?.map(pt => pt.post_id) || [];
+
   let posts: any[] = [];
   if (postIds.length) {
     const { data } = await supabase
@@ -48,17 +48,23 @@ export default async function TagPage({ params }: PageProps) {
     posts = data || [];
   }
 
+  // Приводим к формату, ожидаемому компонентом Avatar (profile)
+  const enriched = posts.map(post => ({
+    ...post,
+    profile: post.profiles,
+  }));
+
   return (
     <div className="container">
       <header className="header">
-        <h1 className="logo">Art Gallery – #{tag.name}</h1>
+        <h1 className="logo">Art Gallery – #{tagName}</h1>
         <UserMenu />
       </header>
-      {posts.length === 0 ? (
-        <p>No artworks with tag #{tag.name}</p>
+      {enriched.length === 0 ? (
+        <p>No artworks with tag #{tagName}</p>
       ) : (
         <div className="gallery">
-          {posts.map(post => (
+          {enriched.map(post => (
             <div key={post.id} className="card">
               <Link href={`/post/${post.id}`}>
                 <img src={post.image_url} alt={post.title} />
@@ -66,9 +72,9 @@ export default async function TagPage({ params }: PageProps) {
               <div className="card-content">
                 <div className="card-title">{post.title}</div>
                 <div className="card-author">
-                  <Avatar url={post.profiles?.avatar_url} size={24} />
+                  <Avatar url={post.profile?.avatar_url} size={24} />
                   <Link href={`/user/${post.user_id}`}>
-                    {post.profiles?.full_name || post.profiles?.username || 'Anonymous'}
+                    {post.profile?.full_name || post.profile?.username || 'Anonymous'}
                   </Link>
                 </div>
               </div>
