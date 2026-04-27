@@ -12,7 +12,8 @@ type LikedPost = {
   image_url: string;
   user_id: string;
   likes_count: number;
-  profile: {
+  views: number;
+  profile?: {
     full_name: string | null;
     username: string | null;
     avatar_url: string | null;
@@ -37,32 +38,51 @@ export default function LikedPage() {
 
   const loadLikedPosts = async (uid: string) => {
     setLoading(true);
-    // Получаем все лайки текущего пользователя
+    // Получаем все post_id, которые лайкнул пользователь
     const { data: likes, error: likesError } = await supabase
       .from('likes')
       .select('post_id')
       .eq('user_id', uid);
-    if (likesError || !likes.length) {
+    if (likesError) {
+      console.error('Likes error:', likesError);
+      setLoading(false);
+      return;
+    }
+    if (!likes.length) {
+      setPosts([]);
       setLoading(false);
       return;
     }
 
     const postIds = likes.map(l => l.post_id);
-    // Загружаем посты и профили авторов
+    // Загружаем посты (без JOIN)
     const { data: postsData, error: postsError } = await supabase
       .from('posts')
-      .select('*, profiles(full_name, username, avatar_url)')
+      .select('*')
       .in('id', postIds)
       .order('created_at', { ascending: false });
     if (postsError) {
-      console.error(postsError);
+      console.error('Posts error:', postsError);
       setLoading(false);
       return;
     }
 
+    // Загружаем профили авторов отдельно
+    const userIds = [...new Set(postsData.map(p => p.user_id).filter(Boolean))];
+    let profilesMap: Record<string, any> = {};
+    if (userIds.length) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, username, avatar_url')
+        .in('id', userIds);
+      if (profiles) {
+        profilesMap = Object.fromEntries(profiles.map(p => [p.id, p]));
+      }
+    }
+
     const enriched = postsData.map(post => ({
       ...post,
-      profile: post.profiles,
+      profile: profilesMap[post.user_id] || null,
     }));
     setPosts(enriched);
     setLoading(false);
@@ -92,6 +112,10 @@ export default function LikedPage() {
                   <Link href={`/user/${post.user_id}`}>
                     {post.profile?.full_name || post.profile?.username || 'Anonymous'}
                   </Link>
+                </div>
+                <div className="card-actions" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <span>👁️ {post.views || 0}</span>
+                  <span>❤️ {post.likes_count || 0}</span>
                 </div>
               </div>
             </div>
