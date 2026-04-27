@@ -89,22 +89,22 @@ export default function HomePage() {
       </header>
 
       {/* Переключатель ленты */}
-      {isLoggedIn && (
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-          <button
-            onClick={() => setFeedType('all')}
-            className={`btn ${feedType === 'all' ? 'btn-primary' : 'btn-outline'}`}
-          >
-            All Artworks
-          </button>
+      <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
+        <button
+          onClick={() => setFeedType('all')}
+          className={`btn ${feedType === 'all' ? 'btn-primary' : 'btn-outline'}`}
+        >
+          All Artworks
+        </button>
+        {isLoggedIn && (
           <button
             onClick={() => setFeedType('following')}
             className={`btn ${feedType === 'following' ? 'btn-primary' : 'btn-outline'}`}
           >
             Following
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Поиск */}
       <div style={{ marginBottom: '1.5rem' }}>
@@ -113,7 +113,13 @@ export default function HomePage() {
           placeholder="Search by title..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ccc' }}
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            borderRadius: '8px',
+            border: '1px solid #ccc',
+            fontSize: '1rem',
+          }}
         />
       </div>
 
@@ -129,7 +135,7 @@ export default function HomePage() {
                 </Link>
                 <div className="card-content">
                   <div className="card-title">{post.title}</div>
-                  <div className="card-author" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
+                  <div className="card-author">
                     <Avatar url={post.profile?.avatar_url} size={24} />
                     <Link href={`/user/${post.user_id}`}>{authorName}</Link>
                   </div>
