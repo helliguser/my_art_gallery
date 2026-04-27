@@ -27,6 +27,7 @@ export default function UploadPage() {
     if (!file || !user) return;
     setUploading(true);
 
+    // 1. Загружаем картинку
     const fileName = `${Date.now()}_${file.name}`;
     const { error: uploadError } = await supabase.storage
       .from('images')
@@ -41,34 +42,50 @@ export default function UploadPage() {
       .from('images')
       .getPublicUrl(fileName);
 
-    // Вставка поста
+    // 2. Создаём пост
     const { data: post, error: insertError } = await supabase
       .from('posts')
       .insert({ title, image_url: publicUrl, user_id: user.id })
       .select()
       .single();
 
-    if (insertError) {
-      alert('Database error: ' + insertError.message);
-      setUploading(false);
-      return;
-    }
-    if (!post) {
-      alert('Failed to create post');
+    if (insertError || !post) {
+      alert('Database error: ' + (insertError?.message || 'Unknown'));
       setUploading(false);
       return;
     }
 
-    // Обработка тегов
+    // 3. Обрабатываем теги
     if (tags.trim()) {
       const tagList = tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
-      for (const t of tagList) {
-        const { data: tagId, error: tagError } = await supabase.rpc('get_or_create_tag', { tag_name: t });
-        if (!tagError && tagId) {
+      for (const tagName of tagList) {
+        // Ищем или создаём тег
+        let tagId = null;
+        const { data: existing } = await supabase
+          .from('tags')
+          .select('id')
+          .eq('name', tagName)
+          .maybeSingle();
+
+        if (existing) {
+          tagId = existing.id;
+        } else {
+          const { data: newTag, error: createError } = await supabase
+            .from('tags')
+            .insert({ name: tagName })
+            .select()
+            .single();
+          if (createError) {
+            console.error('Tag creation error:', createError);
+            continue;
+          }
+          tagId = newTag.id;
+        }
+
+        if (tagId) {
           await supabase
             .from('post_tags')
-            .insert({ post_id: post.id, tag_id: tagId })
-            .maybeSingle();
+            .insert({ post_id: post.id, tag_id: tagId });
         }
       }
     }
