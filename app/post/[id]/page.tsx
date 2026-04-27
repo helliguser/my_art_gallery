@@ -9,7 +9,10 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const supabase = await createClient();
 
-  // Пост
+  // Увеличиваем счётчик просмотров (один раз за загрузку)
+  await supabase.rpc('increment_post_views', { post_id: parseInt(id) });
+
+  // Получаем пост с актуальными данными (включая обновлённые просмотры)
   const { data: post, error } = await supabase
     .from('posts')
     .select('*')
@@ -18,7 +21,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 
   if (error || !post) notFound();
 
-  // Профиль автора
+  // Получаем профиль автора
   let authorProfile = { full_name: null, username: null, avatar_url: null };
   if (post.user_id) {
     const { data: profile } = await supabase
@@ -29,7 +32,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     if (profile) authorProfile = profile;
   }
 
-  // Текущий пользователь
   const { data: { session } } = await supabase.auth.getSession();
   const isAuthor = session?.user?.id === post.user_id;
   const authorName = authorProfile.full_name || authorProfile.username || 'Anonymous';
@@ -43,7 +45,8 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         <div className="post-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <Avatar url={authorProfile.avatar_url} size={32} />
           <div>by {authorName}</div>
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', marginLeft: 'auto' }}>
+            <span>👁️ {post.views || 0}</span>
             <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
             {isAuthor && (
               <Link href={`/post/${post.id}/edit`} className="btn btn-secondary" style={{ fontSize: '0.8rem' }}>

@@ -15,6 +15,7 @@ type Post = {
   created_at: string;
   user_id: string;
   likes_count: number;
+  views: number;
   profile: {
     full_name: string | null;
     username: string | null;
@@ -63,7 +64,7 @@ export default function HomePage() {
         setLoading(false);
         return;
       }
-      setPosts(prev => pageNum === 1 ? data.posts : [...prev, ...data.posts]);
+      setPosts(prev => (pageNum === 1 ? data.posts : [...prev, ...data.posts]));
       setHasMore(pageNum < data.totalPages);
     } catch (err) {
       console.error(err);
@@ -126,7 +127,7 @@ export default function HomePage() {
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
         {posts.length === 0 && !loading && <p style={{ textAlign: 'center' }}>No artworks found.</p>}
         <div className="gallery">
-          {posts.map(post => {
+          {posts.map((post) => {
             const authorName = post.profile?.full_name || post.profile?.username || 'Anonymous';
             return (
               <div key={post.id} className="card">
@@ -138,6 +139,10 @@ export default function HomePage() {
                   <div className="card-author">
                     <Avatar url={post.profile?.avatar_url} size={24} />
                     <Link href={`/user/${post.user_id}`}>{authorName}</Link>
+                  </div>
+                  <div className="card-actions" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <span>👁️ {post.views || 0}</span>
+                    <span>❤️ {post.likes_count || 0}</span>
                   </div>
                 </div>
               </div>

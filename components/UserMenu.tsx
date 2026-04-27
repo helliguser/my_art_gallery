@@ -21,9 +21,7 @@ export default function UserMenu() {
       router.refresh();
     });
 
-    return () => {
-      listener?.subscription.unsubscribe();
-    };
+    return () => listener?.subscription.unsubscribe();
   }, [router]);
 
   const handleLogout = async () => {
@@ -31,17 +29,12 @@ export default function UserMenu() {
     router.push('/');
   };
 
-  if (loading) return <div style={{ minWidth: '100px' }}>...</div>;
-
+  if (loading) return <div>...</div>;
   if (!user) {
     return (
       <div className="user-menu">
-        <Link href="/about" className="btn btn-outline">
-          About
-        </Link>
-        <Link href="/login" className="btn btn-primary">
-          Sign In
-        </Link>
+        <Link href="/about" className="btn btn-outline">About</Link>
+        <Link href="/login" className="btn btn-primary">Sign In</Link>
       </div>
     );
   }
@@ -51,21 +44,12 @@ export default function UserMenu() {
   return (
     <div className="user-menu">
       <span className="user-greeting">Hello, {displayName}</span>
-      <Link href="/profile" className="btn btn-secondary">
-        Profile
-      </Link>
-      <Link href="/my-posts" className="btn btn-secondary">
-        My Posts
-      </Link>
-      <Link href="/upload" className="btn btn-primary">
-        Upload
-      </Link>
-      <Link href="/about" className="btn btn-outline">
-        About
-      </Link>
-      <button onClick={handleLogout} className="btn btn-danger">
-        Logout
-      </button>
+      <Link href="/profile" className="btn btn-secondary">Profile</Link>
+      <Link href="/my-posts" className="btn btn-secondary">My Posts</Link>
+      <Link href="/liked" className="btn btn-outline">Liked</Link>
+      <Link href="/upload" className="btn btn-primary">Upload</Link>
+      <Link href="/about" className="btn btn-outline">About</Link>
+      <button onClick={handleLogout} className="btn btn-danger">Logout</button>
     </div>
   );
 }
