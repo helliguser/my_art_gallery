@@ -11,7 +11,6 @@ export default function FollowButton({ userId }: { userId: string }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('FollowButton: session user id', session?.user?.id);
       setCurrentUserId(session?.user?.id || null);
     });
   }, []);
