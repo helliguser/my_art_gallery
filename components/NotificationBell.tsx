@@ -3,103 +3,138 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 type Notification = {
   id: number;
-  type: 'like' | 'comment' | 'follow';
+  type: string;
+  source_id: number;
   actor_id: string;
-  post_id: number | null;
-  read: boolean;
+  is_read: boolean;
   created_at: string;
   actor?: {
-    username: string;
     full_name: string | null;
+    username: string | null;
     avatar_url: string | null;
   };
 };
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const router = useRouter();
-
-  const fetchNotifications = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*, actor:actor_id(username, full_name, avatar_url)')
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false })
-      .limit(20);
-
-    if (error) return;
-    setNotifications(data || []);
-    setUnreadCount(data?.filter(n => !n.read).length || 0);
-  };
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setUserId(session.user.id);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchNotifications = async () => {
+      // Сначала получаем уведомления
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error(error);
+        return;
+      }
+      if (!data || data.length === 0) {
+        setNotifications([]);
+        setUnreadCount(0);
+        return;
+      }
+
+      // Затем получаем профили авторов (actor) отдельно
+      const actorIds = [...new Set(data.map(n => n.actor_id).filter(Boolean))];
+      let actorsMap: Record<string, any> = {};
+      if (actorIds.length) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, username, avatar_url')
+          .in('id', actorIds);
+        if (profiles) {
+          actorsMap = Object.fromEntries(profiles.map(p => [p.id, p]));
+        }
+      }
+
+      const enriched = data.map(n => ({
+        ...n,
+        actor: actorsMap[n.actor_id] || null,
+      }));
+      setNotifications(enriched);
+      setUnreadCount(enriched.filter(n => !n.is_read).length);
+    };
+
     fetchNotifications();
 
-    // Подписка на realtime (новые уведомления)
+    // Подписка на новые уведомления (realtime)
     const subscription = supabase
-      .channel('notifications')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => {
-        fetchNotifications();
-        router.refresh();
+      .channel('notifications-channel')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
+        // При вставке нового уведомления добавим его в список
+        const newNotif = payload.new as Notification;
+        setNotifications(prev => [newNotif, ...prev]);
+        setUnreadCount(prev => prev + 1);
+        // Можно также подгрузить профиль актора отдельно, но для простоты пока так
+        fetchNotifications(); // Более надёжно просто обновить весь список
       })
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [userId]);
 
   const markAsRead = async (id: number) => {
-    await supabase.from('notifications').update({ read: true }).eq('id', id);
+    await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', id);
     setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
+      prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
     );
-    setUnreadCount(prev => prev - 1);
+    setUnreadCount(prev => Math.max(prev - 1, 0));
   };
 
   const markAllAsRead = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    await supabase.from('notifications').update({ read: true }).eq('user_id', session.user.id);
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    if (!userId) return;
+    await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('user_id', userId)
+      .eq('is_read', false);
+    setNotifications(prev =>
+      prev.map(n => ({ ...n, is_read: true }))
+    );
     setUnreadCount(0);
   };
 
-  const getMessage = (n: Notification) => {
-    const actorName = n.actor?.full_name || n.actor?.username || 'Someone';
-    switch (n.type) {
+  const getNotificationText = (notif: Notification) => {
+    const actorName = notif.actor?.full_name || notif.actor?.username || 'Someone';
+    switch (notif.type) {
       case 'like':
-        return `${actorName} liked your artwork`;
+        return `${actorName} liked your post`;
       case 'comment':
-        return `${actorName} commented on your artwork`;
+        return `${actorName} commented on your post`;
       case 'follow':
         return `${actorName} started following you`;
       default:
-        return '';
+        return `New notification`;
     }
   };
 
-  const getLink = (n: Notification) => {
-    if (n.type === 'follow') return `/user/${n.actor_id}`;
-    if (n.post_id) return `/post/${n.post_id}`;
-    return '#';
-  };
-
   return (
-    <div className="notification-bell">
+    <div style={{ position: 'relative' }}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => setShowDropdown(!showDropdown)}
         className="btn btn-outline"
-        style={{ position: 'relative', fontSize: '1.2rem', padding: '0.3rem 0.6rem' }}
+        style={{ position: 'relative', fontSize: '1.2rem' }}
         aria-label="Notifications"
       >
         🔔
@@ -112,62 +147,77 @@ export default function NotificationBell() {
               background: '#f44336',
               color: 'white',
               borderRadius: '50%',
-              padding: '0 4px',
+              padding: '2px 5px',
               fontSize: '0.7rem',
-              minWidth: '16px',
-              textAlign: 'center',
+              fontWeight: 'bold',
             }}
           >
             {unreadCount}
           </span>
         )}
       </button>
-      {open && (
+      {showDropdown && (
         <div
           style={{
             position: 'absolute',
-            top: '50px',
-            right: '0',
+            right: 0,
+            top: '100%',
+            marginTop: '0.5rem',
             width: '300px',
             maxHeight: '400px',
             overflowY: 'auto',
-            background: 'var(--card-bg)',
+            backgroundColor: 'var(--card-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             zIndex: 1000,
           }}
         >
-          <div style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '0.5rem 1rem',
+              borderBottom: '1px solid var(--border)',
+            }}
+          >
             <strong>Notifications</strong>
             {unreadCount > 0 && (
-              <button onClick={markAllAsRead} className="btn btn-outline" style={{ fontSize: '0.7rem' }}>
+              <button onClick={markAllAsRead} className="btn btn-outline" style={{ fontSize: '0.8rem' }}>
                 Mark all read
               </button>
             )}
           </div>
-          {notifications.length === 0 && <div style={{ padding: '1rem', textAlign: 'center' }}>No notifications</div>}
-          {notifications.map(n => (
-            <Link
-              key={n.id}
-              href={getLink(n)}
-              onClick={() => {
-                if (!n.read) markAsRead(n.id);
-                setOpen(false);
-              }}
-              style={{
-                display: 'block',
-                padding: '0.75rem',
-                borderBottom: '1px solid var(--border)',
-                background: n.read ? 'transparent' : 'rgba(0, 112, 243, 0.1)',
-                color: 'var(--text)',
-                textDecoration: 'none',
-              }}
-            >
-              <div style={{ fontSize: '0.9rem' }}>{getMessage(n)}</div>
-              <small style={{ color: '#666' }}>{new Date(n.created_at).toLocaleString()}</small>
-            </Link>
-          ))}
+          {notifications.length === 0 ? (
+            <div style={{ padding: '1rem', textAlign: 'center' }}>No notifications yet</div>
+          ) : (
+            notifications.map(notif => (
+              <div
+                key={notif.id}
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderBottom: '1px solid var(--border)',
+                  backgroundColor: notif.is_read ? 'transparent' : 'rgba(0,112,243,0.05)',
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  markAsRead(notif.id);
+                  if (notif.type === 'like' || notif.type === 'comment') {
+                    window.location.href = `/post/${notif.source_id}`;
+                  } else if (notif.type === 'follow') {
+                    window.location.href = `/user/${notif.actor_id}`;
+                  }
+                  setShowDropdown(false);
+                }}
+              >
+                {getNotificationText(notif)}
+                <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
+                  {new Date(notif.created_at).toLocaleString()}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>
