@@ -7,28 +7,49 @@ export async function GET(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
   const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get('page') || '1');
+  const limit = parseInt(searchParams.get('limit') || '12');
   const search = searchParams.get('search') || '';
   const following = searchParams.get('following') === 'true';
+  const start = (page - 1) * limit;
+  const end = start + limit - 1;
 
-  let query = supabase.from('posts').select('*').order('created_at', { ascending: false });
+  // Получаем текущего пользователя для фильтра подписок
+  let followingIds: string[] = [];
+  if (following) {
+    // Нужно получить сессию из заголовков (через серверный клиент)
+    // Проще передать токен через куки, но здесь используем анонимный клиент и отдельный запрос к auth
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const { data: follows } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', session.user.id);
+      followingIds = follows?.map(f => f.following_id) || [];
+    }
+  }
+
+  let query = supabase
+    .from('posts')
+    .select('*, likes_count', { count: 'exact' })
+    .order('created_at', { ascending: false });
 
   if (search) {
     query = query.ilike('title', `%${search}%`);
   }
-
-  if (following) {
-    // Получаем текущего пользователя (через серверный клиент с cookies, но здесь нет cookies, поэтому сделаем отдельный запрос на сессию)
-    // Упростим: получим session из заголовка? В API нет доступа к cookies. Обойдёмся тем, что на клиенте будем передавать параметр following, а сам API должен знать, кто текущий пользователь.
-    // Для этого в API нужно получать сессию через заголовок Authorization. Это сложно.
-    // Проще: не фильтровать на сервере, а на клиенте после загрузки всех постов? Нет.
-    // Лучше: передавать список following_ids из клиента. Но это некрасиво.
-    // Сделаем правильно: создадим middleware или будем использовать серверный клиент в API, но для этого нужно передавать cookies вручную. Можно, но громоздко.
-    // Я предложу рабочий компромисс: на клиенте (в page.tsx) перед запросом получаем список подписок и передаём их как параметр.
-    // Но для простоты оставим только поиск, а following пока уберём. Позже реализуем.
-    // Однако вы просили подписки. Давайте сделаем так: в API будем принимать параметр followingIds (JSON), и если он передан, фильтровать.
+  if (following && followingIds.length > 0) {
+    query = query.in('user_id', followingIds);
+  } else if (following && followingIds.length === 0) {
+    // Нет подписок – возвращаем пустой результат
+    return NextResponse.json({
+      posts: [],
+      total: 0,
+      page: 1,
+      totalPages: 0,
+    });
   }
 
-  const { data: posts, error } = await query;
+  const { data: posts, error, count } = await query.range(start, end);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -52,5 +73,10 @@ export async function GET(request: NextRequest) {
     profile: profilesMap[post.user_id] || null,
   }));
 
-  return NextResponse.json({ posts: enrichedPosts });
+  return NextResponse.json({
+    posts: enrichedPosts,
+    total: count,
+    page,
+    totalPages: Math.ceil((count || 0) / limit),
+  });
 }
