@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import ThemeSwitcher from './ThemeSwitcher';
 
 export default function UserMenu() {
   const [user, setUser] = useState<any>(null);
@@ -34,6 +35,7 @@ export default function UserMenu() {
     return (
       <div className="user-menu">
         <Link href="/about" className="btn btn-outline">About</Link>
+        <ThemeSwitcher />
         <Link href="/login" className="btn btn-primary">Sign In</Link>
       </div>
     );
@@ -49,6 +51,7 @@ export default function UserMenu() {
       <Link href="/liked" className="btn btn-outline">Liked</Link>
       <Link href="/upload" className="btn btn-primary">Upload</Link>
       <Link href="/about" className="btn btn-outline">About</Link>
+      <ThemeSwitcher />
       <button onClick={handleLogout} className="btn btn-danger">Logout</button>
     </div>
   );
