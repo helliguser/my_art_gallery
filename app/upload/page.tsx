@@ -9,6 +9,7 @@ export default function UploadPage() {
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [tags, setTags] = useState('');
+  const [rating, setRating] = useState('safe');
   const [uploading, setUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [user, setUser] = useState<any>(null);
@@ -27,7 +28,6 @@ export default function UploadPage() {
     if (!file || !user) return;
     setUploading(true);
 
-    // 1. Загружаем картинку
     const fileName = `${Date.now()}_${file.name}`;
     const { error: uploadError } = await supabase.storage
       .from('images')
@@ -42,10 +42,9 @@ export default function UploadPage() {
       .from('images')
       .getPublicUrl(fileName);
 
-    // 2. Создаём пост
     const { data: post, error: insertError } = await supabase
       .from('posts')
-      .insert({ title, image_url: publicUrl, user_id: user.id })
+      .insert({ title, image_url: publicUrl, user_id: user.id, rating })
       .select()
       .single();
 
@@ -55,18 +54,16 @@ export default function UploadPage() {
       return;
     }
 
-    // 3. Обрабатываем теги
+    // Обработка тегов
     if (tags.trim()) {
       const tagList = tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
       for (const tagName of tagList) {
-        // Ищем или создаём тег
         let tagId = null;
         const { data: existing } = await supabase
           .from('tags')
           .select('id')
           .eq('name', tagName)
           .maybeSingle();
-
         if (existing) {
           tagId = existing.id;
         } else {
@@ -75,13 +72,8 @@ export default function UploadPage() {
             .insert({ name: tagName })
             .select()
             .single();
-          if (createError) {
-            console.error('Tag creation error:', createError);
-            continue;
-          }
-          tagId = newTag.id;
+          if (!createError) tagId = newTag.id;
         }
-
         if (tagId) {
           await supabase
             .from('post_tags')
@@ -96,6 +88,7 @@ export default function UploadPage() {
     setTitle('');
     setFile(null);
     setTags('');
+    setRating('safe');
   };
 
   if (loading) return <div className="container">Loading...</div>;
@@ -126,6 +119,18 @@ export default function UploadPage() {
             placeholder="e.g. cat, digital, portrait"
             style={{ width: '100%', padding: '0.5rem' }}
           />
+        </div>
+        <div style={{ marginBottom: '1rem' }}>
+          <label>Rating</label>
+          <select
+            value={rating}
+            onChange={e => setRating(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem' }}
+          >
+            <option value="safe">Safe</option>
+            <option value="questionable">Questionable</option>
+            <option value="explicit">Explicit</option>
+          </select>
         </div>
         <div style={{ marginBottom: '1rem' }}>
           <label>Image file</label>

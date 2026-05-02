@@ -10,21 +10,22 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '12');
   const search = searchParams.get('search') || '';
-  const tagQuery = searchParams.get('tag') || '';
+  const tag = searchParams.get('tag') || '';
+  const rating = searchParams.get('rating') || ''; // safe, questionable, explicit
   const following = searchParams.get('following') === 'true';
   const userId = searchParams.get('userId');
   const start = (page - 1) * limit;
   const end = start + limit - 1;
 
-  // Парсим теги: разделяем по пробелам, убираем пустые
-  const parts = tagQuery.trim().split(/\s+/);
+  // Парсинг тегов и исключений (как ранее)
+  const parts = tag.trim().split(/\s+/);
   const requiredTags: string[] = [];
   const forbiddenTags: string[] = [];
 
   for (const part of parts) {
     if (part.startsWith('-')) {
-      const tag = part.slice(1);
-      if (tag) forbiddenTags.push(tag);
+      const t = part.slice(1);
+      if (t) forbiddenTags.push(t);
     } else {
       if (part) requiredTags.push(part);
     }
@@ -35,20 +36,21 @@ export async function GET(request: NextRequest) {
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false });
 
-  // --- Обязательные теги (AND) ---
+  // Фильтр по рейтингу
+  if (rating && ['safe', 'questionable', 'explicit'].includes(rating)) {
+    query = query.eq('rating', rating);
+  }
+
+  // Обязательные теги
   if (requiredTags.length) {
-    // Получаем ID всех обязательных тегов
-    const { data: tagRecords, error: tagError } = await supabase
+    const { data: tagRecords } = await supabase
       .from('tags')
       .select('id')
       .in('name', requiredTags);
-    if (tagError || !tagRecords || tagRecords.length !== requiredTags.length) {
-      // Если хоть один тег не найден – результатов нет
+    if (!tagRecords || tagRecords.length !== requiredTags.length) {
       return NextResponse.json({ posts: [], total: 0, page, totalPages: 0 });
     }
     const requiredTagIds = tagRecords.map(t => t.id);
-
-    // Получаем все связи post_tags для этих тегов
     const { data: postTags } = await supabase
       .from('post_tags')
       .select('post_id, tag_id')
@@ -56,14 +58,12 @@ export async function GET(request: NextRequest) {
     if (!postTags || postTags.length === 0) {
       return NextResponse.json({ posts: [], total: 0, page, totalPages: 0 });
     }
-
-    // Считаем, сколько из требуемых тегов имеет каждый пост
     const counts: Record<number, number> = {};
     for (const pt of postTags) {
       counts[pt.post_id] = (counts[pt.post_id] || 0) + 1;
     }
     const postIds = Object.entries(counts)
-      .filter(([, count]) => count === requiredTagIds.length)
+      .filter(([, c]) => c === requiredTagIds.length)
       .map(([id]) => parseInt(id));
     if (postIds.length === 0) {
       return NextResponse.json({ posts: [], total: 0, page, totalPages: 0 });
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     query = query.in('id', postIds);
   }
 
-  // --- Запрещённые теги (NOT IN) ---
+  // Запрещённые теги
   if (forbiddenTags.length) {
     const { data: forbiddenTagRecords } = await supabase
       .from('tags')
@@ -108,13 +108,12 @@ export async function GET(request: NextRequest) {
     query = query.in('user_id', followingIds);
   }
 
-  // Пагинация и выполнение запроса
   const { data: posts, error, count } = await query.range(start, end);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Загружаем профили авторов
+  // Профили авторов
   const userIds = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
   let profilesMap: Record<string, any> = {};
   if (userIds.length) {
@@ -127,13 +126,13 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const enrichedPosts = posts.map(post => ({
+  const enriched = posts.map(post => ({
     ...post,
     profile: profilesMap[post.user_id] || null,
   }));
 
   return NextResponse.json({
-    posts: enrichedPosts,
+    posts: enriched,
     total: count,
     page,
     totalPages: Math.ceil((count || 0) / limit),

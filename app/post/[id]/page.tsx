@@ -10,7 +10,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const supabase = await createClient();
 
-  // Увеличиваем счётчик просмотров
   await supabase.rpc('increment_post_views', { post_id: parseInt(id) });
 
   const { data: post, error } = await supabase
@@ -31,16 +30,26 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     if (profile) authorProfile = profile;
   }
 
-  const { data: session } = await supabase.auth.getSession();
-  const isAuthor = session?.session?.user?.id === post.user_id;
+  const { data: { session } } = await supabase.auth.getSession();
+  const isAuthor = session?.user?.id === post.user_id;
   const authorName = authorProfile.full_name || authorProfile.username || 'Anonymous';
 
-  // Получаем теги этого поста (для отображения)
+  // Получаем теги
   const { data: postTags } = await supabase
     .from('post_tags')
     .select('tag_id, tags(name)')
     .eq('post_id', post.id);
   const tags = postTags?.map(pt => (pt.tags as any).name) || [];
+
+  // Рейтинг поста (с запасным значением)
+  const postRating = post.rating || 'safe';
+  const ratingColor: Record<string, string> = {
+    safe: 'green',
+    questionable: 'orange',
+    explicit: 'red',
+  };
+  const ratingDisplay = postRating.toUpperCase();
+  const color = ratingColor[postRating] || 'gray';
 
   return (
     <div className="container">
@@ -52,6 +61,9 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           <Avatar url={authorProfile.avatar_url} size={32} />
           <div>by {authorName}</div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span title={`Rating: ${postRating}`} style={{ color: color, fontWeight: 'bold' }}>
+              {ratingDisplay}
+            </span>
             <FavoriteButton postId={post.id} />
             <span>👁️ {post.views || 0}</span>
             <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
