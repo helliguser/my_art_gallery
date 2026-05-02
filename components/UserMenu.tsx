@@ -51,6 +51,7 @@ export default function UserMenu() {
       <Link href="/my-posts" className="btn btn-secondary">My Posts</Link>
       <Link href="/favorites" className="btn btn-outline">Favorites</Link>
       <Link href="/liked" className="btn btn-outline">Liked</Link>
+      <Link href="/saved-searches" className="btn btn-outline">Saved Searches</Link>
       <Link href="/upload" className="btn btn-primary">Upload</Link>
       <Link href="/about" className="btn btn-outline">About</Link>
       <NotificationBell />

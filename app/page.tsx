@@ -7,6 +7,7 @@ import Avatar from '@/components/Avatar';
 import InfiniteScroll from '@/components/InfiniteScroll';
 import { useDebounce } from 'use-debounce';
 import { supabase } from '@/lib/supabase';
+import SaveSearchButton from '@/components/SaveSearchButton';
 
 type Post = {
   id: number;
@@ -113,7 +114,7 @@ export default function HomePage() {
       </header>
 
       {/* Переключатель ленты */}
-      <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
+      <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <button
           onClick={() => setFeedType('all')}
           className={`btn ${feedType === 'all' ? 'btn-primary' : 'btn-outline'}`}
@@ -131,21 +132,22 @@ export default function HomePage() {
       </div>
 
       {/* Поля поиска */}
-      <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
+      <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <input
           type="text"
           placeholder="Search by title..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--input-border)' }}
+          style={{ flex: 2, minWidth: '200px', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--input-border)' }}
         />
         <input
           type="text"
-          placeholder="Search by tag..."
+          placeholder="Search by tag (e.g. cat -dog)..."
           value={tagTerm}
           onChange={e => setTagTerm(e.target.value)}
-          style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--input-border)' }}
+          style={{ flex: 2, minWidth: '200px', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--input-border)' }}
         />
+        <SaveSearchButton currentSearch={tagTerm} />
       </div>
 
       {/* Популярные теги */}
@@ -158,7 +160,7 @@ export default function HomePage() {
               className="btn btn-outline"
               style={{ fontSize: '0.8rem' }}
             >
-              {tag.name} ({tag.count})
+              #{tag.name} ({tag.count})
             </button>
           ))}
         </div>
