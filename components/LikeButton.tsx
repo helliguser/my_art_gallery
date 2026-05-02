@@ -1,26 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { animate } from 'animejs';
 
 export default function LikeButton({ postId, initialLikes }: { postId: number; initialLikes: number }) {
   const [likes, setLikes] = useState(initialLikes);
   const [userLiked, setUserLiked] = useState(false);
   const [loading, setLoading] = useState(false);
+  const heartRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    async function checkUserLike() {
-      const { data: { session } } = await supabase.auth.getSession();
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return;
-      const { data } = await supabase
+      supabase
         .from('likes')
         .select('id')
         .eq('post_id', postId)
         .eq('user_id', session.user.id)
-        .maybeSingle();
-      setUserLiked(!!data);
-    }
-    checkUserLike();
+        .maybeSingle()
+        .then(({ data }) => setUserLiked(!!data));
+    });
   }, [postId]);
 
   const handleLike = async () => {
@@ -32,6 +32,7 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       setLoading(false);
       return;
     }
+
     if (userLiked) {
       const { error } = await supabase
         .from('likes')
@@ -41,9 +42,7 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       if (!error) {
         setLikes(prev => prev - 1);
         setUserLiked(false);
-      } else {
-        alert('Error: ' + error.message);
-      }
+      } else alert('Error: ' + error.message);
     } else {
       const { error } = await supabase
         .from('likes')
@@ -51,15 +50,27 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       if (!error) {
         setLikes(prev => prev + 1);
         setUserLiked(true);
-      } else {
-        alert('Error: ' + error.message);
-      }
+        // Анимация сердечка
+        if (heartRef.current) {
+          animate(heartRef.current, {
+            scale: [1, 1.8, 1],
+            duration: 400,
+            easing: 'spring(1.2, 80, 10, 0)',
+          });
+        }
+      } else alert('Error: ' + error.message);
     }
     setLoading(false);
   };
 
   return (
-    <button onClick={handleLike} disabled={loading} className="like-button" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>
+    <button
+      ref={heartRef}
+      onClick={handleLike}
+      disabled={loading}
+      className="like-button"
+      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}
+    >
       {userLiked ? '❤️' : '🤍'} {likes}
     </button>
   );

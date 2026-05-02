@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Avatar from './Avatar';
 import ThemeSwitcher from './ThemeSwitcher';
 import NotificationBell from './NotificationBell';
+import { animate } from 'animejs';
 
 export default function UserMenu() {
   const [user, setUser] = useState<any>(null);
@@ -14,6 +15,7 @@ export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -28,7 +30,6 @@ export default function UserMenu() {
     return () => listener?.subscription.unsubscribe();
   }, [router]);
 
-  // Загружаем аватарку, только когда есть user.id
   useEffect(() => {
     if (!user?.id) return;
     supabase
@@ -48,6 +49,27 @@ export default function UserMenu() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Анимация открытия/закрытия меню
+  useEffect(() => {
+    if (menuRef.current) {
+      if (isOpen) {
+        animate(menuRef.current, {
+          translateY: [-10, 0],
+          opacity: [0, 1],
+          duration: 200,
+          easing: 'easeOutQuad',
+        });
+      } else {
+        animate(menuRef.current, {
+          translateY: [0, -10],
+          opacity: [1, 0],
+          duration: 150,
+          easing: 'easeOutQuad',
+        });
+      }
+    }
+  }, [isOpen]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -76,32 +98,16 @@ export default function UserMenu() {
         <span className="dropdown-arrow">{isOpen ? '▲' : '▼'}</span>
       </div>
       {isOpen && (
-        <div className="user-dropdown-menu">
-          <Link href="/profile" className="dropdown-item" onClick={() => setIsOpen(false)}>
-            <span className="dropdown-icon">👤</span> Profile
-          </Link>
-          <Link href="/my-posts" className="dropdown-item" onClick={() => setIsOpen(false)}>
-            <span className="dropdown-icon">🖼️</span> My Posts
-          </Link>
-          <Link href="/liked" className="dropdown-item" onClick={() => setIsOpen(false)}>
-            <span className="dropdown-icon">❤️</span> Liked
-          </Link>
-          <Link href="/favorites" className="dropdown-item" onClick={() => setIsOpen(false)}>
-            <span className="dropdown-icon">⭐</span> Favorites
-          </Link>
-          <Link href="/saved-searches" className="dropdown-item" onClick={() => setIsOpen(false)}>
-            <span className="dropdown-icon">🔖</span> Saved Searches
-          </Link>
-          <Link href="/trending" className="dropdown-item" onClick={() => setIsOpen(false)}>
-            <span className="dropdown-icon">🔥</span> Trending
-          </Link>
-          <Link href="/upload" className="dropdown-item" onClick={() => setIsOpen(false)}>
-            <span className="dropdown-icon">📤</span> Upload
-          </Link>
+        <div className="user-dropdown-menu" ref={menuRef}>
+          <Link href="/profile" className="dropdown-item" onClick={() => setIsOpen(false)}>Profile</Link>
+          <Link href="/my-posts" className="dropdown-item" onClick={() => setIsOpen(false)}>My Posts</Link>
+          <Link href="/liked" className="dropdown-item" onClick={() => setIsOpen(false)}>Liked</Link>
+          <Link href="/favorites" className="dropdown-item" onClick={() => setIsOpen(false)}>Favorites</Link>
+          <Link href="/saved-searches" className="dropdown-item" onClick={() => setIsOpen(false)}>Saved Searches</Link>
+          <Link href="/trending" className="dropdown-item" onClick={() => setIsOpen(false)}>Trending</Link>
+          <Link href="/upload" className="dropdown-item" onClick={() => setIsOpen(false)}>Upload</Link>
           <div className="dropdown-divider"></div>
-          <button onClick={handleLogout} className="dropdown-item logout">
-            <span className="dropdown-icon">🚪</span> Logout
-          </button>
+          <button onClick={handleLogout} className="dropdown-item logout">Logout</button>
         </div>
       )}
       <div className="user-menu-icons">
