@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import UserMenu from '@/components/UserMenu';
 import Avatar from '@/components/Avatar';
@@ -25,13 +26,17 @@ type Post = {
 };
 
 export default function HomePage() {
+  const searchParams = useSearchParams();
+  const initialTag = searchParams.get('tag') || '';
+  const initialSearch = searchParams.get('search') || '';
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [tagTerm, setTagTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [tagTerm, setTagTerm] = useState(initialTag);
   const [debouncedSearch] = useDebounce(searchTerm, 500);
   const [debouncedTag] = useDebounce(tagTerm, 500);
   const [feedType, setFeedType] = useState<'all' | 'following'>('all');
@@ -39,7 +44,6 @@ export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [popularTags, setPopularTags] = useState<{ name: string; count: number }[]>([]);
 
-  // Получаем сессию
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setCurrentUserId(session?.user?.id || null);
@@ -47,7 +51,6 @@ export default function HomePage() {
     });
   }, []);
 
-  // Загружаем популярные теги
   useEffect(() => {
     const fetchPopularTags = async () => {
       const { data } = await supabase
@@ -68,7 +71,6 @@ export default function HomePage() {
     fetchPopularTags();
   }, []);
 
-  // Сброс при изменении поиска или типа ленты
   useEffect(() => {
     setPosts([]);
     setPage(1);
@@ -93,9 +95,8 @@ export default function HomePage() {
     setLoading(false);
   };
 
-  // Первоначальная загрузка
   useEffect(() => {
-    fetchPosts(1, '', '', 'all').finally(() => setInitialLoading(false));
+    fetchPosts(1, initialSearch, initialTag, 'all').finally(() => setInitialLoading(false));
   }, []);
 
   const loadMore = async () => {
@@ -113,7 +114,6 @@ export default function HomePage() {
         <UserMenu />
       </header>
 
-      {/* Переключатель ленты */}
       <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <button
           onClick={() => setFeedType('all')}
@@ -131,7 +131,6 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Поля поиска */}
       <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <input
           type="text"
@@ -150,7 +149,6 @@ export default function HomePage() {
         <SaveSearchButton currentSearch={tagTerm} />
       </div>
 
-      {/* Популярные теги */}
       {popularTags.length > 0 && (
         <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
           {popularTags.map(tag => (
