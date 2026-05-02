@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import Link from 'next/link';
 
 type Notification = {
   id: number;
@@ -77,7 +76,9 @@ export default function NotificationBell() {
       })
       .subscribe();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [userId]);
 
   const markAsRead = async (id: number) => {
