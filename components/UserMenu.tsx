@@ -1,15 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Avatar from './Avatar';
 import ThemeSwitcher from './ThemeSwitcher';
 import NotificationBell from './NotificationBell';
 
 export default function UserMenu() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -26,12 +29,23 @@ export default function UserMenu() {
     return () => listener?.subscription.unsubscribe();
   }, [router]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/');
+    setIsOpen(false);
   };
 
-  if (loading) return <div>...</div>;
+  if (loading) return <div className="user-menu-placeholder">...</div>;
   if (!user) {
     return (
       <div className="user-menu">
@@ -43,21 +57,32 @@ export default function UserMenu() {
   }
 
   const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+  const avatarUrl = user.user_metadata?.avatar_url || null;
 
   return (
-    <div className="user-menu">
-      <span className="user-greeting">Hello, {displayName}</span>
-      <Link href="/profile" className="btn btn-secondary">Profile</Link>
-      <Link href="/my-posts" className="btn btn-secondary">My Posts</Link>
-      <Link href="/favorites" className="btn btn-outline">Favorites</Link>
-      <Link href="/liked" className="btn btn-outline">Liked</Link>
-      <Link href="/saved-searches" className="btn btn-outline">Saved Searches</Link>
-      <Link href="/upload" className="btn btn-primary">Upload</Link>
-      <Link href="/about" className="btn btn-outline">About</Link>
-      <Link href="/trending" className="btn btn-outline">Trending</Link>
-      <NotificationBell />
-      <ThemeSwitcher />
-      <button onClick={handleLogout} className="btn btn-danger">Logout</button>
+    <div className="user-menu" ref={dropdownRef}>
+      <div className="user-dropdown-trigger" onClick={() => setIsOpen(!isOpen)}>
+        <Avatar url={avatarUrl} size={32} />
+        <span className="user-greeting">{displayName}</span>
+        <span className="dropdown-arrow">▼</span>
+      </div>
+      {isOpen && (
+        <div className="user-dropdown-menu">
+          <Link href="/profile" className="dropdown-item" onClick={() => setIsOpen(false)}>Profile</Link>
+          <Link href="/my-posts" className="dropdown-item" onClick={() => setIsOpen(false)}>My Posts</Link>
+          <Link href="/liked" className="dropdown-item" onClick={() => setIsOpen(false)}>Liked</Link>
+          <Link href="/favorites" className="dropdown-item" onClick={() => setIsOpen(false)}>Favorites</Link>
+          <Link href="/saved-searches" className="dropdown-item" onClick={() => setIsOpen(false)}>Saved Searches</Link>
+          <Link href="/trending" className="dropdown-item" onClick={() => setIsOpen(false)}>Trending</Link>
+          <Link href="/upload" className="dropdown-item" onClick={() => setIsOpen(false)}>Upload</Link>
+          <div className="dropdown-divider"></div>
+          <button onClick={handleLogout} className="dropdown-item logout">Logout</button>
+        </div>
+      )}
+      <div className="user-menu-icons">
+        <NotificationBell />
+        <ThemeSwitcher />
+      </div>
     </div>
   );
 }

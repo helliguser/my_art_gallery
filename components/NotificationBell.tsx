@@ -36,7 +36,6 @@ export default function NotificationBell() {
     if (!userId) return;
 
     const fetchNotifications = async () => {
-      // 1. Получаем уведомления
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
@@ -52,7 +51,6 @@ export default function NotificationBell() {
       setNotifications(data || []);
       setUnreadCount(data?.filter(n => !n.is_read).length || 0);
 
-      // 2. Отдельно загружаем профили акторов (для имён)
       const actorIds = [...new Set(data?.map(n => n.actor_id).filter(Boolean) || [])];
       if (actorIds.length) {
         const { data: profiles } = await supabase
@@ -71,7 +69,6 @@ export default function NotificationBell() {
 
     fetchNotifications();
 
-    // Realtime подписка на новые уведомления
     const subscription = supabase
       .channel('notifications-channel')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
@@ -80,32 +77,19 @@ export default function NotificationBell() {
       })
       .subscribe();
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, [userId]);
 
   const markAsRead = async (id: number) => {
-    await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('id', id);
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
-    );
+    await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, is_read: true } : n)));
     setUnreadCount(prev => Math.max(prev - 1, 0));
   };
 
   const markAllAsRead = async () => {
     if (!userId) return;
-    await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('user_id', userId)
-      .eq('is_read', false);
-    setNotifications(prev =>
-      prev.map(n => ({ ...n, is_read: true }))
-    );
+    await supabase.from('notifications').update({ is_read: true }).eq('user_id', userId).eq('is_read', false);
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     setUnreadCount(0);
   };
 
@@ -113,14 +97,10 @@ export default function NotificationBell() {
     const actor = profilesMap[notif.actor_id] || {};
     const actorName = actor.full_name || actor.username || 'Someone';
     switch (notif.type) {
-      case 'like':
-        return `${actorName} liked your post`;
-      case 'comment':
-        return `${actorName} commented on your post`;
-      case 'follow':
-        return `${actorName} started following you`;
-      default:
-        return `New notification`;
+      case 'like': return `${actorName} liked your post`;
+      case 'comment': return `${actorName} commented on your post`;
+      case 'follow': return `${actorName} started following you`;
+      default: return 'New notification';
     }
   };
 
@@ -134,54 +114,21 @@ export default function NotificationBell() {
       >
         🔔
         {unreadCount > 0 && (
-          <span
-            style={{
-              position: 'absolute',
-              top: '-5px',
-              right: '-5px',
-              background: '#f44336',
-              color: 'white',
-              borderRadius: '50%',
-              padding: '2px 5px',
-              fontSize: '0.7rem',
-              fontWeight: 'bold',
-            }}
-          >
+          <span style={{
+            position: 'absolute', top: '-5px', right: '-5px',
+            background: '#f44336', color: 'white', borderRadius: '50%',
+            padding: '2px 5px', fontSize: '0.7rem', fontWeight: 'bold',
+          }}>
             {unreadCount}
           </span>
         )}
       </button>
       {showDropdown && (
-        <div
-          style={{
-            position: 'absolute',
-            right: 0,
-            top: '100%',
-            marginTop: '0.5rem',
-            width: '300px',
-            maxHeight: '400px',
-            overflowY: 'auto',
-            backgroundColor: 'var(--card-bg)',
-            border: '1px solid var(--border)',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.5rem 1rem',
-              borderBottom: '1px solid var(--border)',
-            }}
-          >
+        <div className="notification-dropdown">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)' }}>
             <strong>Notifications</strong>
             {unreadCount > 0 && (
-              <button onClick={markAllAsRead} className="btn btn-outline" style={{ fontSize: '0.8rem' }}>
-                Mark all read
-              </button>
+              <button onClick={markAllAsRead} className="btn btn-outline" style={{ fontSize: '0.8rem' }}>Mark all read</button>
             )}
           </div>
           {notifications.length === 0 ? (
@@ -190,19 +137,11 @@ export default function NotificationBell() {
             notifications.map(notif => (
               <div
                 key={notif.id}
-                style={{
-                  padding: '0.75rem 1rem',
-                  borderBottom: '1px solid var(--border)',
-                  backgroundColor: notif.is_read ? 'transparent' : 'rgba(0,112,243,0.05)',
-                  cursor: 'pointer',
-                }}
+                className={`notification-item ${notif.is_read ? 'notification-item-read' : 'notification-item-unread'}`}
                 onClick={() => {
                   markAsRead(notif.id);
-                  if (notif.type === 'like' || notif.type === 'comment') {
-                    window.location.href = `/post/${notif.source_id}`;
-                  } else if (notif.type === 'follow') {
-                    window.location.href = `/user/${notif.actor_id}`;
-                  }
+                  if (notif.type === 'like' || notif.type === 'comment') window.location.href = `/post/${notif.source_id}`;
+                  else if (notif.type === 'follow') window.location.href = `/user/${notif.actor_id}`;
                   setShowDropdown(false);
                 }}
               >

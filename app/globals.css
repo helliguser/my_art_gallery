@@ -304,4 +304,116 @@ textarea {
   .post-title {
     font-size: 1.5rem;
   }
+
+  /* User dropdown styles */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+}
+
+.user-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 32px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  transition: background 0.2s;
+}
+.user-dropdown-trigger:hover {
+  background: var(--btn-outline-hover);
+}
+.dropdown-arrow {
+  font-size: 0.7rem;
+  color: var(--text);
+}
+.user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+  overflow: hidden;
+}
+.dropdown-item {
+  display: block;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  color: var(--text);
+  transition: background 0.1s;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 0.9rem;
+}
+.dropdown-item:hover {
+  background: var(--btn-outline-hover);
+}
+.dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.25rem 0;
+}
+.logout {
+  color: #f44336;
+}
+.user-menu-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+@media (max-width: 640px) {
+  .user-menu {
+    gap: 0.5rem;
+  }
+  .user-greeting {
+    display: none;
+  }
+  .dropdown-arrow {
+    display: none;
+  }
+  .user-dropdown-trigger {
+    padding: 0.25rem;
+  }
+}
+/* Notification dropdown */
+.notification-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 8px;
+  width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+}
+.notification-item {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.notification-item-unread {
+  background-color: rgba(0,112,243,0.05);
+}
+.notification-item-read {
+  background-color: transparent;
+}
+.notification-item:hover {
+  background: var(--btn-outline-hover);
+}
 }
