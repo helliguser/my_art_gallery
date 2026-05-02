@@ -12,6 +12,7 @@ export default function UserMenu() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -26,6 +27,17 @@ export default function UserMenu() {
     });
     return () => listener?.subscription.unsubscribe();
   }, [router]);
+
+  // Загружаем аватарку, только когда есть user.id
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => setAvatarUrl(data?.avatar_url || null));
+  }, [user?.id]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -55,16 +67,6 @@ export default function UserMenu() {
   }
 
   const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
-  // Если у пользователя есть аватар в профиле, подгрузим его
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  useEffect(() => {
-    supabase
-      .from('profiles')
-      .select('avatar_url')
-      .eq('id', user.id)
-      .single()
-      .then(({ data }) => setAvatarUrl(data?.avatar_url || null));
-  }, [user.id]);
 
   return (
     <div className="user-menu" ref={dropdownRef}>
