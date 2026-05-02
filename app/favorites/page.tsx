@@ -7,12 +7,21 @@ import UserMenu from '@/components/UserMenu';
 export default async function FavoritesPage() {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect('/login?redirect_to=/favorites');
 
-  const { data: favorites } = await supabase
+  if (!session) {
+    redirect('/login?redirect_to=/favorites');
+  }
+
+  // Получаем избранные посты
+  const { data: favorites, error } = await supabase
     .from('favorites')
     .select('post_id')
     .eq('user_id', session.user.id);
+
+  if (error) {
+    console.error('Error fetching favorites:', error);
+    return <div className="container">Error loading favorites</div>;
+  }
 
   const postIds = favorites?.map(f => f.post_id) || [];
   let posts: any[] = [];
