@@ -54,6 +54,7 @@ export default function UserMenu() {
       <Link href="/saved-searches" className="btn btn-outline">Saved Searches</Link>
       <Link href="/upload" className="btn btn-primary">Upload</Link>
       <Link href="/about" className="btn btn-outline">About</Link>
+      <Link href="/trending" className="btn btn-outline">Trending</Link>
       <NotificationBell />
       <ThemeSwitcher />
       <button onClick={handleLogout} className="btn btn-danger">Logout</button>
