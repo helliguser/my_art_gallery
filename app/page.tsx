@@ -38,6 +38,7 @@ export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [popularTags, setPopularTags] = useState<{ name: string; count: number }[]>([]);
 
+  // Получаем сессию
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setCurrentUserId(session?.user?.id || null);
@@ -66,6 +67,7 @@ export default function HomePage() {
     fetchPopularTags();
   }, []);
 
+  // Сброс при изменении поиска или типа ленты
   useEffect(() => {
     setPosts([]);
     setPage(1);
@@ -90,6 +92,7 @@ export default function HomePage() {
     setLoading(false);
   };
 
+  // Первоначальная загрузка
   useEffect(() => {
     fetchPosts(1, '', '', 'all').finally(() => setInitialLoading(false));
   }, []);
@@ -109,6 +112,7 @@ export default function HomePage() {
         <UserMenu />
       </header>
 
+      {/* Переключатель ленты */}
       <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
         <button
           onClick={() => setFeedType('all')}
@@ -126,6 +130,7 @@ export default function HomePage() {
         )}
       </div>
 
+      {/* Поля поиска */}
       <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
         <input
           type="text"
@@ -143,6 +148,7 @@ export default function HomePage() {
         />
       </div>
 
+      {/* Популярные теги */}
       {popularTags.length > 0 && (
         <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
           {popularTags.map(tag => (
