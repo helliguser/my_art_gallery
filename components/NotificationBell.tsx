@@ -43,7 +43,7 @@ export default function NotificationBell() {
         .limit(20);
 
       if (error) {
-        console.error('Error fetching notifications:', error);
+        console.error(error);
         return;
       }
 
@@ -68,8 +68,8 @@ export default function NotificationBell() {
 
     fetchNotifications();
 
-    const subscription = supabase
-      .channel('notifications-channel')
+    const channel = supabase
+      .channel('notifications')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
         setNotifications(prev => [payload.new as Notification, ...prev]);
         setUnreadCount(prev => prev + 1);
@@ -77,7 +77,7 @@ export default function NotificationBell() {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      channel.unsubscribe();
     };
   }, [userId]);
 
@@ -115,25 +115,19 @@ export default function NotificationBell() {
       >
         🔔
         {unreadCount > 0 && (
-          <span style={{
-            position: 'absolute', top: '-5px', right: '-5px',
-            background: '#f44336', color: 'white', borderRadius: '50%',
-            padding: '2px 5px', fontSize: '0.7rem', fontWeight: 'bold',
-          }}>
-            {unreadCount}
-          </span>
+          <span className="notification-badge">{unreadCount}</span>
         )}
       </button>
       {showDropdown && (
         <div className="notification-dropdown">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)' }}>
-            <strong>Notifications</strong>
+          <div className="notification-header">
+            <span>Notifications</span>
             {unreadCount > 0 && (
-              <button onClick={markAllAsRead} className="btn btn-outline" style={{ fontSize: '0.8rem' }}>Mark all read</button>
+              <button onClick={markAllAsRead} className="btn-link">Mark all read</button>
             )}
           </div>
           {notifications.length === 0 ? (
-            <div style={{ padding: '1rem', textAlign: 'center' }}>No notifications yet</div>
+            <div className="notification-empty">No notifications yet</div>
           ) : (
             notifications.map(notif => (
               <div
@@ -146,10 +140,8 @@ export default function NotificationBell() {
                   setShowDropdown(false);
                 }}
               >
-                {getNotificationText(notif)}
-                <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
-                  {new Date(notif.created_at).toLocaleString()}
-                </div>
+                <div>{getNotificationText(notif)}</div>
+                <div className="notification-time">{new Date(notif.created_at).toLocaleString()}</div>
               </div>
             ))
           )}

@@ -20,12 +20,10 @@ export default function UserMenu() {
       setUser(session?.user ?? null);
       setLoading(false);
     });
-
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       router.refresh();
     });
-
     return () => listener?.subscription.unsubscribe();
   }, [router]);
 
@@ -57,26 +55,51 @@ export default function UserMenu() {
   }
 
   const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
-  const avatarUrl = user.user_metadata?.avatar_url || null;
+  // Если у пользователя есть аватар в профиле, подгрузим его
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  useEffect(() => {
+    supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => setAvatarUrl(data?.avatar_url || null));
+  }, [user.id]);
 
   return (
     <div className="user-menu" ref={dropdownRef}>
       <div className="user-dropdown-trigger" onClick={() => setIsOpen(!isOpen)}>
         <Avatar url={avatarUrl} size={32} />
         <span className="user-greeting">{displayName}</span>
-        <span className="dropdown-arrow">▼</span>
+        <span className="dropdown-arrow">{isOpen ? '▲' : '▼'}</span>
       </div>
       {isOpen && (
         <div className="user-dropdown-menu">
-          <Link href="/profile" className="dropdown-item" onClick={() => setIsOpen(false)}>Profile</Link>
-          <Link href="/my-posts" className="dropdown-item" onClick={() => setIsOpen(false)}>My Posts</Link>
-          <Link href="/liked" className="dropdown-item" onClick={() => setIsOpen(false)}>Liked</Link>
-          <Link href="/favorites" className="dropdown-item" onClick={() => setIsOpen(false)}>Favorites</Link>
-          <Link href="/saved-searches" className="dropdown-item" onClick={() => setIsOpen(false)}>Saved Searches</Link>
-          <Link href="/trending" className="dropdown-item" onClick={() => setIsOpen(false)}>Trending</Link>
-          <Link href="/upload" className="dropdown-item" onClick={() => setIsOpen(false)}>Upload</Link>
+          <Link href="/profile" className="dropdown-item" onClick={() => setIsOpen(false)}>
+            <span className="dropdown-icon">👤</span> Profile
+          </Link>
+          <Link href="/my-posts" className="dropdown-item" onClick={() => setIsOpen(false)}>
+            <span className="dropdown-icon">🖼️</span> My Posts
+          </Link>
+          <Link href="/liked" className="dropdown-item" onClick={() => setIsOpen(false)}>
+            <span className="dropdown-icon">❤️</span> Liked
+          </Link>
+          <Link href="/favorites" className="dropdown-item" onClick={() => setIsOpen(false)}>
+            <span className="dropdown-icon">⭐</span> Favorites
+          </Link>
+          <Link href="/saved-searches" className="dropdown-item" onClick={() => setIsOpen(false)}>
+            <span className="dropdown-icon">🔖</span> Saved Searches
+          </Link>
+          <Link href="/trending" className="dropdown-item" onClick={() => setIsOpen(false)}>
+            <span className="dropdown-icon">🔥</span> Trending
+          </Link>
+          <Link href="/upload" className="dropdown-item" onClick={() => setIsOpen(false)}>
+            <span className="dropdown-icon">📤</span> Upload
+          </Link>
           <div className="dropdown-divider"></div>
-          <button onClick={handleLogout} className="dropdown-item logout">Logout</button>
+          <button onClick={handleLogout} className="dropdown-item logout">
+            <span className="dropdown-icon">🚪</span> Logout
+          </button>
         </div>
       )}
       <div className="user-menu-icons">
