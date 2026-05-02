@@ -1,43 +1,68 @@
-import { createClient } from '@/lib/supabase-server';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import Avatar from '@/components/Avatar';
 import UserMenu from '@/components/UserMenu';
 
-export default async function FavoritesPage() {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+type Post = {
+  id: number;
+  title: string;
+  image_url: string;
+  user_id: string;
+};
 
-  if (!session) {
-    redirect('/login?redirect_to=/favorites');
-  }
+export default function FavoritesPage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Получаем избранные посты
-  const { data: favorites, error } = await supabase
-    .from('favorites')
-    .select('post_id')
-    .eq('user_id', session.user.id);
+  useEffect(() => {
+    async function fetchFavorites() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          window.location.href = '/login?redirect_to=/favorites';
+          return;
+        }
 
-  if (error) {
-    console.error('Error fetching favorites:', error);
-    return <div className="container">Error loading favorites</div>;
-  }
+        // 1. Получить избранные (post_id)
+        const { data: favorites, error: favError } = await supabase
+          .from('favorites')
+          .select('post_id')
+          .eq('user_id', session.user.id);
 
-  const postIds = favorites?.map(f => f.post_id) || [];
-  let posts: any[] = [];
-  if (postIds.length) {
-    const { data } = await supabase
-      .from('posts')
-      .select('*, profiles(full_name, username, avatar_url)')
-      .in('id', postIds)
-      .order('created_at', { ascending: false });
-    posts = data || [];
-  }
+        if (favError) throw favError;
 
-  const enriched = posts.map(post => ({
-    ...post,
-    profile: post.profiles,
-  }));
+        const postIds = favorites?.map(f => f.post_id) || [];
+        if (postIds.length === 0) {
+          setPosts([]);
+          setLoading(false);
+          return;
+        }
+
+        // 2. Получить посты (без join)
+        const { data: postsData, error: postsError } = await supabase
+          .from('posts')
+          .select('id, title, image_url, user_id')
+          .in('id', postIds)
+          .order('created_at', { ascending: false });
+
+        if (postsError) throw postsError;
+        setPosts(postsData || []);
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load favorites');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchFavorites();
+  }, []);
+
+  if (loading) return <div className="container">Loading...</div>;
+  if (error) return <div className="container">Error: {error}</div>;
 
   return (
     <div className="container">
@@ -45,23 +70,17 @@ export default async function FavoritesPage() {
         <h1 className="logo">My Favorites</h1>
         <UserMenu />
       </header>
-      {enriched.length === 0 ? (
-        <p>You haven't added any favorites yet.</p>
+      {posts.length === 0 ? (
+        <p>No favorites yet.</p>
       ) : (
         <div className="gallery">
-          {enriched.map(post => (
+          {posts.map(post => (
             <div key={post.id} className="card">
               <Link href={`/post/${post.id}`}>
-                <img src={post.image_url} alt={post.title} />
+                <img src={post.image_url} alt={post.title} style={{ width: '100%', height: 'auto' }} />
               </Link>
               <div className="card-content">
                 <div className="card-title">{post.title}</div>
-                <div className="card-author">
-                  <Avatar url={post.profile?.avatar_url} size={24} />
-                  <Link href={`/user/${post.user_id}`}>
-                    {post.profile?.full_name || post.profile?.username || 'Anonymous'}
-                  </Link>
-                </div>
               </div>
             </div>
           ))}
