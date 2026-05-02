@@ -49,6 +49,7 @@ export default function UserMenu() {
       <span className="user-greeting">Hello, {displayName}</span>
       <Link href="/profile" className="btn btn-secondary">Profile</Link>
       <Link href="/my-posts" className="btn btn-secondary">My Posts</Link>
+      <Link href="/favorites" className="btn btn-outline">Favorites</Link>
       <Link href="/liked" className="btn btn-outline">Liked</Link>
       <Link href="/upload" className="btn btn-primary">Upload</Link>
       <Link href="/about" className="btn btn-outline">About</Link>

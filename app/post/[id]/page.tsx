@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Comments from './Comments';
 import LikeButton from '@/components/LikeButton';
+import FavoriteButton from '@/components/FavoriteButton';
 import Avatar from '@/components/Avatar';
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
@@ -12,7 +13,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   // Увеличиваем счётчик просмотров
   await supabase.rpc('increment_post_views', { post_id: parseInt(id) });
 
-  // Получаем пост
   const { data: post, error } = await supabase
     .from('posts')
     .select('*')
@@ -21,7 +21,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 
   if (error || !post) notFound();
 
-  // Получаем автора
   let authorProfile = { full_name: null, username: null, avatar_url: null };
   if (post.user_id) {
     const { data: profile } = await supabase
@@ -32,16 +31,16 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     if (profile) authorProfile = profile;
   }
 
-  // Получаем теги этого поста
+  const { data: session } = await supabase.auth.getSession();
+  const isAuthor = session?.session?.user?.id === post.user_id;
+  const authorName = authorProfile.full_name || authorProfile.username || 'Anonymous';
+
+  // Получаем теги этого поста (для отображения)
   const { data: postTags } = await supabase
     .from('post_tags')
     .select('tag_id, tags(name)')
     .eq('post_id', post.id);
   const tags = postTags?.map(pt => (pt.tags as any).name) || [];
-
-  const { data: { session } } = await supabase.auth.getSession();
-  const isAuthor = session?.user?.id === post.user_id;
-  const authorName = authorProfile.full_name || authorProfile.username || 'Anonymous';
 
   return (
     <div className="container">
@@ -52,7 +51,8 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         <div className="post-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <Avatar url={authorProfile.avatar_url} size={32} />
           <div>by {authorName}</div>
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <FavoriteButton postId={post.id} />
             <span>👁️ {post.views || 0}</span>
             <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
             {isAuthor && (
@@ -63,7 +63,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           </div>
         </div>
 
-        {/* Отображение тегов */}
         {tags.length > 0 && (
           <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             {tags.map(tag => (
