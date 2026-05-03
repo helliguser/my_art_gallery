@@ -397,6 +397,141 @@ textarea {
   letter-spacing: 1px;
 }
 
+/* ========== СТРАНИЦА РЕГИСТРАЦИИ (MODERN UI) ========== */
+.register-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 120px);
+  padding: 2rem 1rem;
+}
+
+.register-card {
+  background: rgba(30, 30, 40, 0.7);
+  backdrop-filter: blur(12px);
+  border-radius: 28px;
+  padding: 2rem 1.8rem;
+  width: 100%;
+  max-width: 460px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s;
+}
+
+[data-theme="light"] .register-card {
+  background: rgba(245, 245, 250, 0.85);
+  backdrop-filter: blur(12px);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.1);
+}
+
+.register-title {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #fff, #aaa);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.input-group {
+  width: 100%;
+}
+
+.register-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+[data-theme="light"] .register-input {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #111;
+}
+
+.register-input:focus {
+  border-color: #4f9cff;
+  box-shadow: 0 0 0 3px rgba(79, 156, 255, 0.3);
+  background: var(--card-bg);
+}
+
+.register-button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 40px;
+  background: linear-gradient(135deg, #4f9cff, #6a5cff);
+  border: none;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.register-button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 8px 20px -6px #4f9cff80;
+}
+
+.register-button:active {
+  transform: translateY(1px);
+}
+
+.register-error {
+  background: rgba(255, 80, 80, 0.12);
+  border: 1px solid rgba(255, 80, 80, 0.35);
+  border-radius: 14px;
+  padding: 10px 14px;
+  color: #ff6b6b;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.register-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  opacity: 0.8;
+}
+
+.register-footer a {
+  color: #4f9cff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.register-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 560px) {
+  .register-card {
+    padding: 1.5rem;
+  }
+  .register-title {
+    font-size: 1.5rem;
+  }
+}
+
 /* Адаптивность */
 @media (max-width: 640px) {
   .header {
