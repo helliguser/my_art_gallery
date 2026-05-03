@@ -9,43 +9,73 @@ import UserMenu from '@/components/UserMenu';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect_to') || '/';
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setMessage('');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setMessage(error.message);
-    else router.push(redirectTo);
+    setError('');
+    setLoading(true);
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setError('Invalid email or password. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+    router.push(redirectTo);
   }
 
   return (
-    <div className="container">
-      <header className="header">
-        <h1 className="logo">Furline</h1>
-        <UserMenu />
-      </header>
-      <div style={{ maxWidth: '400px', margin: '2rem auto', background: 'var(--card-bg)', borderRadius: '24px', padding: '2rem', boxShadow: 'var(--shadow)' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Sign In</h2>
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.25rem' }}>Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="input" />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.25rem' }}>Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="input" />
-          </div>
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>Sign In</button>
-        </form>
-        {message && <p style={{ color: '#f44336', marginTop: '1rem' }}>{message}</p>}
-        <p style={{ textAlign: 'center', marginTop: '1rem' }}>
-          Don't have an account? <Link href="/register" style={{ color: '#0070f3' }}>Sign Up</Link>
-        </p>
+    <>
+      <div className="container">
+        <header className="header">
+          <h1 className="logo">Furline</h1>
+          <UserMenu />
+        </header>
       </div>
-    </div>
+      <div className="register-wrapper">
+        <div className="register-card">
+          <h2 className="register-title">Welcome back</h2>
+          <form onSubmit={handleSubmit} className="register-form">
+            <div className="input-group">
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="register-input"
+              />
+            </div>
+            <div className="input-group">
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="register-input"
+              />
+            </div>
+            {error && <div className="register-error">{error}</div>}
+            <button type="submit" disabled={loading} className="register-button">
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+          <p className="register-footer">
+            Don't have an account? <Link href="/register">Sign Up</Link>
+          </p>
+        </div>
+      </div>
+    </>
   );
 }
