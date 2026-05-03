@@ -6,7 +6,7 @@
 }
 
 body {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-roboto), system-ui, sans-serif;
   background-color: var(--bg);
   color: var(--text);
   transition: background-color 0.3s, color 0.3s;
@@ -24,6 +24,7 @@ body {
   --input-border: #ccc;
   --shadow: 0 2px 8px rgba(0,0,0,0.1);
   --shadow-hover: 0 8px 20px rgba(0,0,0,0.12);
+  --card-bg-rgb: 255, 255, 255;
 }
 
 /* Тёмная тема */
@@ -38,6 +39,7 @@ body {
   --input-border: #555;
   --shadow: 0 2px 8px rgba(0,0,0,0.3);
   --shadow-hover: 0 8px 20px rgba(0,0,0,0.4);
+  --card-bg-rgb: 45, 45, 45;
 }
 
 .container {
@@ -60,22 +62,22 @@ body {
 
 .logo {
   font-size: 1.8rem;
-  font-weight: bold;
+  font-weight: 700;
   background: linear-gradient(135deg, #0070f3, #00c6ff);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  text-decoration: none;
+  letter-spacing: -0.5px;
 }
 
 /* Кнопки и ссылки */
 .btn {
   display: inline-block;
   padding: 0.5rem 1rem;
-  border-radius: 8px;
+  border-radius: 40px;
   text-decoration: none;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   border: none;
   cursor: pointer;
   font-size: 0.9rem;
@@ -84,9 +86,11 @@ body {
 .btn-primary {
   background: #0070f3;
   color: white;
+  box-shadow: 0 2px 6px rgba(0,112,243,0.3);
 }
 .btn-primary:hover {
   background: #005bb5;
+  transform: scale(1.02);
 }
 
 .btn-secondary {
@@ -124,15 +128,15 @@ body {
 /* Карточка поста */
 .card {
   background: var(--card-bg);
-  border-radius: 12px;
+  border-radius: 20px;
   overflow: hidden;
   box-shadow: var(--shadow);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.25s ease, box-shadow 0.3s ease;
   border: 1px solid var(--border);
 }
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-hover);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 30px -12px rgba(0,0,0,0.2);
 }
 .card img {
   width: 100%;
@@ -287,14 +291,16 @@ textarea {
   min-width: 200px;
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  background: rgba(var(--card-bg-rgb), 0.95);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 1000;
   overflow: hidden;
 }
 .dropdown-item {
   display: block;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1.2rem;
   text-decoration: none;
   color: var(--text);
   transition: background 0.1s;
@@ -304,6 +310,7 @@ textarea {
   width: 100%;
   text-align: left;
   font-size: 0.9rem;
+  font-weight: 500;
 }
 .dropdown-item:hover {
   background: var(--btn-outline-hover);
@@ -353,6 +360,7 @@ textarea {
   background: var(--btn-outline-hover);
 }
 
+/* Лоадеры */
 .loader-spinner-small {
   width: 32px;
   height: 32px;
@@ -361,8 +369,6 @@ textarea {
   border-radius: 50%;
   display: inline-block;
 }
-
-/* Loader styles */
 .loader-spinner {
   width: 48px;
   height: 48px;
@@ -370,17 +376,14 @@ textarea {
   border-top: 3px solid #0070f3;
   border-radius: 50%;
 }
-
 .loader-text {
   font-size: 0.9rem;
   color: var(--text);
   opacity: 0.7;
   letter-spacing: 1px;
-
-
 }
 
-/* Адаптивность для мобильных устройств */
+/* Адаптивность */
 @media (max-width: 640px) {
   .header {
     flex-direction: column;
@@ -395,7 +398,6 @@ textarea {
   .post-title {
     font-size: 1.5rem;
   }
-  /* Скрываем текст и стрелку в меню на мобильных, остаётся только аватар */
   .user-greeting {
     display: none;
   }
