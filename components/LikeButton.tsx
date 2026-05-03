@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { animate } from 'animejs';
-import Icon from './Icon';
+import LikeIcon from './LikeIcon';
 
 export default function LikeButton({ postId, initialLikes }: { postId: number; initialLikes: number }) {
   const [likes, setLikes] = useState(initialLikes);
   const [userLiked, setUserLiked] = useState(false);
   const [loading, setLoading] = useState(false);
-  const heartId = `like-icon-${postId}`;
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -24,8 +24,6 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
     });
   }, [postId]);
 
-  const heartRedFilter = "brightness(0) saturate(100%) invert(22%) sepia(84%) saturate(6797%) hue-rotate(357deg) brightness(96%) contrast(117%)";
-
   const handleLike = async () => {
     if (loading) return;
     setLoading(true);
@@ -35,7 +33,6 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       setLoading(false);
       return;
     }
-    const heartEl = document.getElementById(heartId);
     if (userLiked) {
       const { error } = await supabase
         .from('likes')
@@ -45,9 +42,8 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       if (!error) {
         setLikes(prev => prev - 1);
         setUserLiked(false);
-        if (heartEl) {
-          animate(heartEl, { scale: [1.2, 1], duration: 200 });
-          heartEl.style.filter = 'none';
+        if (buttonRef.current) {
+          animate(buttonRef.current, { scale: [1.2, 1], duration: 200 });
         }
       }
     } else {
@@ -57,13 +53,8 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       if (!error) {
         setLikes(prev => prev + 1);
         setUserLiked(true);
-        if (heartEl) {
-          animate(heartEl, {
-            scale: [1, 1.5, 1],
-            duration: 400,
-            easing: 'spring(1.2, 80, 10, 0)',
-          });
-          heartEl.style.filter = heartRedFilter;
+        if (buttonRef.current) {
+          animate(buttonRef.current, { scale: [1, 1.5, 1], duration: 400, easing: 'spring(1.2, 80, 10, 0)' });
         }
       }
     }
@@ -72,14 +63,14 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
 
   return (
     <button
+      ref={buttonRef}
       onClick={handleLike}
       disabled={loading}
-      id={heartId}
       className="like-button"
       style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
     >
-      <Icon name="Heart_01" folder="interface" size={18} />
-      <span>{likes}</span>
+      <LikeIcon filled={userLiked} size={18} />
+      <span style={{ fontSize: '0.9rem' }}>{likes}</span>
     </button>
   );
 }
