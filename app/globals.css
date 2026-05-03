@@ -7,13 +7,24 @@
 
 body {
   font-family: var(--font-roboto), system-ui, sans-serif;
-  background-color: var(--bg);
+  background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
   color: var(--text);
-  transition: background-color 0.3s, color 0.3s;
+  transition: background 0.3s, color 0.3s;
+  min-height: 100vh;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* Светлая тема (по умолчанию) */
 :root {
+  --grad-start: #f6f9fc;
+  --grad-end: #e9f0f5;
   --bg: #fafafa;
   --text: #1a1a1a;
   --card-bg: white;
@@ -29,6 +40,8 @@ body {
 
 /* Тёмная тема */
 [data-theme="dark"] {
+  --grad-start: #1e1e2f;
+  --grad-end: #2a2a3a;
   --bg: #1a1a1a;
   --text: #fafafa;
   --card-bg: #2d2d2d;
