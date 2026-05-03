@@ -1,20 +1,35 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { animate, stagger } from 'animejs';
 
 export default function Animations() {
+  const animated = useRef<Set<Element>>(new Set());
+
+  const animateBatch = (cards: Element[]) => {
+    if (!cards.length) return;
+    animate(cards, {
+      translateY: [20, 0],
+      opacity: [0, 1],
+      duration: 500,
+      delay: stagger(80),
+      easing: 'easeOutQuad',
+    });
+    cards.forEach(card => animated.current.add(card));
+  };
+
   useEffect(() => {
-    const cards = document.querySelectorAll('.card');
-    if (cards.length) {
-      animate(cards, {
-        translateY: [30, 0],
-        opacity: [0, 1],
-        duration: 500,
-        delay: stagger(80),
-        easing: 'easeOutQuad',
-      });
-    }
+    // Анимация существующих карточек
+    const existing = Array.from(document.querySelectorAll('.card'));
+    if (existing.length) animateBatch(existing);
+
+    // Следим за новыми карточками (бесконечный скролл)
+    const observer = new MutationObserver(() => {
+      const newCards = Array.from(document.querySelectorAll('.card')).filter(c => !animated.current.has(c));
+      if (newCards.length) animateBatch(newCards);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, []);
 
   return null;

@@ -9,7 +9,7 @@ import InfiniteScroll from '@/components/InfiniteScroll';
 import { useDebounce } from 'use-debounce';
 import { supabase } from '@/lib/supabase';
 import SaveSearchButton from '@/components/SaveSearchButton';
-import LikeIcon from '@/components/LikeIcon'; // не кликабельная иконка
+import LikeButton from '@/components/LikeButton';
 import Icon from '@/components/Icon';
 
 type Post = {
@@ -129,9 +129,8 @@ export default function HomePage() {
                     <Avatar url={post.profile?.avatar_url} size={24} />
                     <Link href={`/user/${post.user_id}`}>{authorName}</Link>
                   </div>
-                  <div className="card-actions" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    <LikeIcon filled={false} size={16} />
-                    <span>{post.likes_count || 0}</span>
+                  <div className="card-actions" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.25rem', marginTop: '0.5rem' }}>
+                    <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
                   </div>
                 </div>
               </div>
