@@ -10,7 +10,7 @@ import { useDebounce } from 'use-debounce';
 import { supabase } from '@/lib/supabase';
 import SaveSearchButton from '@/components/SaveSearchButton';
 import Icon from '@/components/Icon';
-import LikeIcon from '@/components/LikeIcon';  // используем уже готовый компонент (не интерактивный)
+import LikeIcon from '@/components/LikeIcon';
 
 type Post = {
   id: number;
@@ -18,7 +18,6 @@ type Post = {
   image_url: string;
   user_id: string;
   likes_count: number;
-  views: number;
   profile: { full_name: string | null; username: string | null; avatar_url: string | null } | null;
 };
 
@@ -94,7 +93,7 @@ export default function HomePage() {
   return (
     <div className="container">
       <header className="header">
-        <h1 className="logo">Furbyte</h1>
+        <h1 className="logo">Furline</h1>
         <UserMenu />
       </header>
       <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -124,7 +123,6 @@ export default function HomePage() {
                   <div className="card-title">{post.title}</div>
                   <div className="card-author"><Avatar url={post.profile?.avatar_url} size={24} /><Link href={`/user/${post.user_id}`}>{authorName}</Link></div>
                   <div className="card-actions" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    {/* Просто иконка сердца без счётчика? Не, оставим сердечко + счётчик лайков, глаз убираем */}
                     <LikeIcon filled={false} size={14} />
                     <span>{post.likes_count || 0}</span>
                   </div>

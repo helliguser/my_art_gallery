@@ -11,8 +11,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const supabase = await createClient();
 
-  await supabase.rpc('increment_post_views', { post_id: parseInt(id) });
-
   const { data: post, error } = await supabase
     .from('posts')
     .select('*')
@@ -61,7 +59,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span title={`Rating: ${postRating}`} style={{ color, fontWeight: 'bold' }}>{ratingDisplay}</span>
             <FavoriteButton postId={post.id} />
-            <span>👁️ {post.views || 0}</span>
             <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
             {isAuthor && (
               <Link href={`/post/${post.id}/edit`} className="btn btn-secondary" style={{ fontSize: '0.8rem' }}>Edit</Link>
