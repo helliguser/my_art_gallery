@@ -10,7 +10,6 @@ import { useDebounce } from 'use-debounce';
 import { supabase } from '@/lib/supabase';
 import SaveSearchButton from '@/components/SaveSearchButton';
 import Icon from '@/components/Icon';
-import LikeIcon from '@/components/LikeIcon';
 
 type Post = {
   id: number;
@@ -62,8 +61,11 @@ export default function HomePage() {
     fetchPopularTags();
   }, []);
 
+  // Сброс при изменении поиска/ленты
   useEffect(() => {
-    setPosts([]); setPage(1); setHasMore(true);
+    setPosts([]);
+    setPage(1);
+    setHasMore(true);
     fetchPosts(1, debouncedSearch, debouncedTag, feedType);
   }, [debouncedSearch, debouncedTag, feedType]);
 
@@ -78,15 +80,22 @@ export default function HomePage() {
       if (data.error) throw new Error(data.error);
       setPosts(prev => (pageNum === 1 ? data.posts : [...prev, ...data.posts]));
       setHasMore(pageNum < data.totalPages);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
     setLoading(false);
   };
 
+  // Первоначальная загрузка
   useEffect(() => {
     fetchPosts(1, initialSearch, initialTag, 'all').finally(() => setInitialLoading(false));
   }, []);
 
-  const loadMore = () => { const nextPage = page + 1; setPage(nextPage); fetchPosts(nextPage, debouncedSearch, debouncedTag, feedType); };
+  const loadMore = async () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    await fetchPosts(nextPage, debouncedSearch, debouncedTag, feedType);
+  };
 
   if (initialLoading) return null;
 
@@ -122,9 +131,8 @@ export default function HomePage() {
                 <div className="card-content">
                   <div className="card-title">{post.title}</div>
                   <div className="card-author"><Avatar url={post.profile?.avatar_url} size={24} /><Link href={`/user/${post.user_id}`}>{authorName}</Link></div>
-                  <div className="card-actions" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    <LikeIcon filled={false} size={14} />
-                    <span>{post.likes_count || 0}</span>
+                  <div className="card-actions" style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginTop: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>❤️ {post.likes_count || 0}</span>
                   </div>
                 </div>
               </div>
