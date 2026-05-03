@@ -5,11 +5,13 @@ import Comments from './Comments';
 import LikeButton from '@/components/LikeButton';
 import FavoriteButton from '@/components/FavoriteButton';
 import Avatar from '@/components/Avatar';
+import Icon from '@/components/Icon';
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
 
+  // Увеличиваем счётчик просмотров
   await supabase.rpc('increment_post_views', { post_id: parseInt(id) });
 
   const { data: post, error } = await supabase
@@ -34,14 +36,13 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const isAuthor = session?.user?.id === post.user_id;
   const authorName = authorProfile.full_name || authorProfile.username || 'Anonymous';
 
-  // Получаем теги
+  // Получаем теги этого поста
   const { data: postTags } = await supabase
     .from('post_tags')
     .select('tag_id, tags(name)')
     .eq('post_id', post.id);
   const tags = postTags?.map(pt => (pt.tags as any).name) || [];
 
-  // Рейтинг поста (с запасным значением)
   const postRating = post.rating || 'safe';
   const ratingColor: Record<string, string> = {
     safe: 'green',
@@ -54,7 +55,14 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="container">
       <div className="post-page">
-        <Link href="/" className="btn btn-outline" style={{ marginBottom: '1rem', display: 'inline-block' }}>← Back</Link>
+        <Link
+          href="/"
+          className="btn btn-outline"
+          style={{ marginBottom: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+        >
+          <Icon name="Arrow_Left_MD" size={16} />
+          Back
+        </Link>
         <h1 className="post-title">{post.title}</h1>
         <img src={post.image_url} alt={post.title} className="post-image" />
         <div className="post-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>

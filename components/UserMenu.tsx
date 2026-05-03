@@ -8,6 +8,7 @@ import Avatar from './Avatar';
 import ThemeSwitcher from './ThemeSwitcher';
 import NotificationBell from './NotificationBell';
 import { animate } from 'animejs';
+import Icon from './Icon';
 
 export default function UserMenu() {
   const [user, setUser] = useState<any>(null);
@@ -50,7 +51,6 @@ export default function UserMenu() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Анимация открытия/закрытия меню
   useEffect(() => {
     if (menuRef.current) {
       if (isOpen) {
@@ -95,7 +95,7 @@ export default function UserMenu() {
       <div className="user-dropdown-trigger" onClick={() => setIsOpen(!isOpen)}>
         <Avatar url={avatarUrl} size={32} />
         <span className="user-greeting">{displayName}</span>
-        <span className="dropdown-arrow">{isOpen ? '▲' : '▼'}</span>
+        <Icon name={isOpen ? 'Caret_Up_SM' : 'Caret_Down_SM'} size={12} />
       </div>
       {isOpen && (
         <div className="user-dropdown-menu" ref={menuRef}>
