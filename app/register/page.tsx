@@ -4,7 +4,6 @@ import { useState, FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Icon from '@/components/Icon';
 import UserMenu from '@/components/UserMenu';
 
 export default function RegisterPage() {
@@ -17,9 +16,9 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const validateUsername = (username: string) => {
-    if (username.length < 3) return 'Username must be at least 3 characters';
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) return 'Username can only contain letters, numbers and underscores';
+  const validateUsername = (name: string) => {
+    if (name.length < 3) return 'Username must be at least 3 characters';
+    if (!/^[a-zA-Z0-9_]+$/.test(name)) return 'Only letters, numbers and underscores allowed';
     return null;
   };
 
@@ -43,12 +42,12 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    // 1. Создаём пользователя в Auth
+    // 1. Создаём пользователя
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { username, full_name: username }, // в метаданные
+        data: { username, full_name: username },
       },
     });
 
@@ -60,7 +59,7 @@ export default function RegisterPage() {
 
     const userId = authData.user?.id;
     if (!userId) {
-      setError('Registration failed, please try again');
+      setError('Registration failed. Please try again.');
       setLoading(false);
       return;
     }
@@ -76,13 +75,14 @@ export default function RegisterPage() {
       });
 
     if (profileError) {
-      console.error('Profile creation error:', profileError);
-      setError('Error creating profile, but account created. Please contact support.');
+      console.error('Profile insert error:', profileError);
+      setError(`Profile creation failed: ${profileError.message}`);
+      // Здесь можно удалить созданного пользователя, но для простоты оставим так
       setLoading(false);
       return;
     }
 
-    // 3. Если всё успешно, перенаправляем на главную (пользователь уже залогинен)
+    // Успех – перенаправляем на главную
     router.push('/');
   };
 
@@ -92,67 +92,69 @@ export default function RegisterPage() {
         <h1 className="logo">Furline</h1>
         <UserMenu />
       </header>
-      <div style={{ maxWidth: '400px', margin: '0 auto', padding: '2rem 0' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Join Furline</h2>
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{ width: '100%', padding: '0.5rem' }}
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label>Username (public)</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              placeholder="Only letters, numbers, underscore"
-              style={{ width: '100%', padding: '0.5rem' }}
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label>Password (min 6 chars)</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ width: '100%', padding: '0.5rem' }}
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label>Confirm password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              style={{ width: '100%', padding: '0.5rem' }}
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label>Date of birth (optional)</label>
-            <input
-              type="date"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem' }}
-            />
-          </div>
-          {error && <p style={{ color: 'red', marginBottom: '1rem' }}>{error}</p>}
-          <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%' }}>
-            {loading ? 'Registering...' : 'Register'}
-          </button>
-        </form>
-        <p style={{ textAlign: 'center', marginTop: '1rem' }}>
-          Already a member? <Link href="/login">Log in</Link>
-        </p>
+      <div style={{ maxWidth: '450px', margin: '2rem auto' }}>
+        <div style={{ background: 'var(--card-bg)', borderRadius: '24px', padding: '2rem', boxShadow: 'var(--shadow)' }}>
+          <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Join Furline</h2>
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: '1rem' }}>
+              <label>Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)' }}
+              />
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label>Username (public)</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                placeholder="letters, numbers, underscores"
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)' }}
+              />
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label>Password (min 6 chars)</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)' }}
+              />
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label>Confirm password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)' }}
+              />
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label>Date of birth (optional)</label>
+              <input
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)' }}
+              />
+            </div>
+            {error && <p style={{ color: '#f44336', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</p>}
+            <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>
+              {loading ? 'Registering...' : 'Register'}
+            </button>
+          </form>
+          <p style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+            Already a member? <Link href="/login">Sign In</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
