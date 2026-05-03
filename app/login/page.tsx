@@ -28,39 +28,23 @@ export default function LoginPage() {
         <h1 className="logo">Furline</h1>
         <UserMenu />
       </header>
-      <div style={{ maxWidth: '450px', margin: '2rem auto' }}>
-        <div style={{ background: 'var(--card-bg)', borderRadius: '24px', padding: '2rem', boxShadow: 'var(--shadow)' }}>
-          <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Welcome Back</h2>
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)' }}
-              />
-            </div>
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)' }}
-              />
-            </div>
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>
-              Sign In
-            </button>
-            {message && <p style={{ color: '#f44336', marginTop: '1rem', fontSize: '0.9rem' }}>{message}</p>}
-          </form>
-          <p style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-            New to Furline? <Link href="/register">Create an account</Link>
-          </p>
-        </div>
+      <div style={{ maxWidth: '400px', margin: '2rem auto', background: 'var(--card-bg)', borderRadius: '24px', padding: '2rem', boxShadow: 'var(--shadow)' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Sign In</h2>
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.25rem' }}>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="input" />
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.25rem' }}>Password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="input" />
+          </div>
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>Sign In</button>
+        </form>
+        {message && <p style={{ color: '#f44336', marginTop: '1rem' }}>{message}</p>}
+        <p style={{ textAlign: 'center', marginTop: '1rem' }}>
+          Don't have an account? <Link href="/register" style={{ color: '#0070f3' }}>Sign Up</Link>
+        </p>
       </div>
     </div>
   );

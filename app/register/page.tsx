@@ -18,7 +18,7 @@ export default function RegisterPage() {
 
   const validateUsername = (name: string) => {
     if (name.length < 3) return 'Username must be at least 3 characters';
-    if (!/^[a-zA-Z0-9_]+$/.test(name)) return 'Only letters, numbers and underscores allowed';
+    if (!/^[a-zA-Z0-9_]+$/.test(name)) return 'Username can only contain letters, numbers and underscores';
     return null;
   };
 
@@ -26,9 +26,9 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    const usernameError = validateUsername(username);
-    if (usernameError) {
-      setError(usernameError);
+    const usernameErr = validateUsername(username);
+    if (usernameErr) {
+      setError(usernameErr);
       return;
     }
     if (password !== confirmPassword) {
@@ -42,13 +42,10 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    // 1. Создаём пользователя
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: { username, full_name: username },
-      },
+      options: { data: { username, full_name: username } },
     });
 
     if (signUpError) {
@@ -59,12 +56,11 @@ export default function RegisterPage() {
 
     const userId = authData.user?.id;
     if (!userId) {
-      setError('Registration failed. Please try again.');
+      setError('Failed to create account. Please try again.');
       setLoading(false);
       return;
     }
 
-    // 2. Создаём профиль в таблице profiles
     const { error: profileError } = await supabase
       .from('profiles')
       .insert({
@@ -76,14 +72,12 @@ export default function RegisterPage() {
 
     if (profileError) {
       console.error('Profile insert error:', profileError);
-      setError(`Profile creation failed: ${profileError.message}`);
-      // Здесь можно удалить созданного пользователя, но для простоты оставим так
-      setLoading(false);
-      return;
+      setError('Account created, but profile setup failed. Please contact support.');
+      // Пользователь уже создан в auth, но профиль не сохранён. Можно попробовать создать профиль позже через другую форму.
+    } else {
+      router.push('/');
     }
-
-    // Успех – перенаправляем на главную
-    router.push('/');
+    setLoading(false);
   };
 
   return (
@@ -92,69 +86,37 @@ export default function RegisterPage() {
         <h1 className="logo">Furline</h1>
         <UserMenu />
       </header>
-      <div style={{ maxWidth: '450px', margin: '2rem auto' }}>
-        <div style={{ background: 'var(--card-bg)', borderRadius: '24px', padding: '2rem', boxShadow: 'var(--shadow)' }}>
-          <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Join Furline</h2>
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)' }}
-              />
-            </div>
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Username (public)</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                placeholder="letters, numbers, underscores"
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)' }}
-              />
-            </div>
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Password (min 6 chars)</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)' }}
-              />
-            </div>
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Confirm password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)' }}
-              />
-            </div>
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Date of birth (optional)</label>
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)' }}
-              />
-            </div>
-            {error && <p style={{ color: '#f44336', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</p>}
-            <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>
-              {loading ? 'Registering...' : 'Register'}
-            </button>
-          </form>
-          <p style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-            Already a member? <Link href="/login">Sign In</Link>
-          </p>
-        </div>
+      <div style={{ maxWidth: '500px', margin: '2rem auto', background: 'var(--card-bg)', borderRadius: '24px', padding: '2rem', boxShadow: 'var(--shadow)' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', fontFamily: 'var(--font-playwrite), cursive' }}>Join Furline</h2>
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.25rem' }}>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="input" />
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.25rem' }}>Username (public)</label>
+            <input type="text" value={username} onChange={e => setUsername(e.target.value)} required className="input" placeholder="e.g. FurArtist" />
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.25rem' }}>Password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="input" />
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.25rem' }}>Confirm password</label>
+            <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="input" />
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.25rem' }}>Date of birth (optional)</label>
+            <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} className="input" />
+          </div>
+          {error && <p style={{ color: '#f44336', marginBottom: '1rem' }}>{error}</p>}
+          <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>
+            {loading ? 'Creating account...' : 'Register'}
+          </button>
+        </form>
+        <p style={{ textAlign: 'center', marginTop: '1rem' }}>
+          Already a member? <Link href="/login" style={{ color: '#0070f3' }}>Log in</Link>
+        </p>
       </div>
     </div>
   );
