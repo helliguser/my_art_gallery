@@ -6,7 +6,7 @@
 }
 
 body {
-  font-family: var(--font-roboto), system-ui, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
   background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
   background-size: 200% 200%;
   animation: gradientShift 8s ease infinite;
