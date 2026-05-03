@@ -6,80 +6,42 @@ import { animate, stagger } from 'animejs';
 export default function Animations() {
   const animated = useRef<Set<Element>>(new Set());
 
-  const animateElement = (el: Element, delay = 0) => {
-    if (animated.current.has(el)) return;
-    animated.current.add(el);
-    animate(el, {
-      translateY: [20, 0],
+  const animateCard = (card: Element) => {
+    if (animated.current.has(card)) return;
+    animated.current.add(card);
+    animate(card, {
+      translateY: [30, 0],
       opacity: [0, 1],
       duration: 500,
-      delay,
       easing: 'easeOutQuad',
     });
   };
 
-  const animateBatch = (elements: Element[], staggerDelay = 80) => {
-    if (!elements.length) return;
-    animate(elements, {
-      translateY: [20, 0],
+  const animateBatch = (cards: Element[]) => {
+    if (!cards.length) return;
+    animate(cards, {
+      translateY: [30, 0],
       opacity: [0, 1],
       duration: 500,
-      delay: stagger(staggerDelay),
+      delay: stagger(80),
       easing: 'easeOutQuad',
     });
-    elements.forEach(el => animated.current.add(el));
-  };
-
-  // Эффект наведения для карточек (дополнительная плавность)
-  const setupHoverEffects = () => {
-    const cards = document.querySelectorAll('.card');
-    cards.forEach((card) => {
-      card.addEventListener('mouseenter', () => {
-        animate(card, {
-          scale: 1.02,
-          duration: 200,
-          easing: 'easeOutQuad',
-        });
-      });
-      card.addEventListener('mouseleave', () => {
-        animate(card, {
-          scale: 1,
-          duration: 200,
-          easing: 'easeOutQuad',
-        });
-      });
-    });
+    cards.forEach(card => animated.current.add(card));
   };
 
   useEffect(() => {
-    // 1. Анимация заголовка
-    const logo = document.querySelector('.logo');
-    if (logo) {
-      animate(logo, {
-        translateX: [-30, 0],
-        opacity: [0, 1],
-        duration: 600,
-        easing: 'easeOutQuad',
-      });
-    }
-
-    // 2. Анимация существующих карточек
+    // Анимируем все существующие карточки
     const existingCards = Array.from(document.querySelectorAll('.card'));
-    if (existingCards.length) {
-      animateBatch(existingCards, 100);
-    }
+    if (existingCards.length) animateBatch(existingCards);
 
-    // 3. Эффекты наведения
-    setupHoverEffects();
-
-    // 4. Наблюдатель за новыми карточками (бесконечная прокрутка)
+    // Наблюдаем за появлением новых карточек
     const observer = new MutationObserver(() => {
       const newCards = Array.from(document.querySelectorAll('.card')).filter(
         card => !animated.current.has(card)
       );
       if (newCards.length) {
+        console.log(`[Animations] New cards found: ${newCards.length}`);
         animateBatch(newCards);
-        setupHoverEffects(); // обновляем эффекты для новых карточек
       }
     });
 
