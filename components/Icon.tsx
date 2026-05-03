@@ -1,22 +1,21 @@
-import Image from 'next/image';
-
 interface IconProps {
-  name: string;      // относительный путь от public/icons, например "arrow/Arrow_Left_MD"
+  name: string;
+  folder?: 'arrow' | 'interface';
   size?: number;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export default function Icon({ name, size = 20, className = '' }: IconProps) {
-  // если имя уже начинается с icons/, не добавляем, иначе добавляем /icons/
-  const src = name.startsWith('/') ? name : `/icons/${name}.svg`;
+export default function Icon({ name, folder = 'interface', size = 20, className = '', style = {} }: IconProps) {
+  const src = `/icons/${folder}/${name}.svg`;
   return (
     <img
       src={src}
-      alt={name.split('/').pop()}
+      alt={name}
       width={size}
       height={size}
       className={className}
-      style={{ display: 'inline-block', verticalAlign: 'middle' }}
+      style={{ display: 'inline-block', verticalAlign: 'middle', ...style }}
     />
   );
 }

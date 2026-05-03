@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { animate } from 'animejs';
+import Icon from './Icon';
 
 export default function FavoriteButton({ postId }: { postId: number }) {
   const [isFavorited, setIsFavorited] = useState(false);
@@ -16,16 +18,13 @@ export default function FavoriteButton({ postId }: { postId: number }) {
 
   useEffect(() => {
     if (!userId) return;
-    const checkFavorite = async () => {
-      const { data } = await supabase
-        .from('favorites')
-        .select('post_id')
-        .eq('user_id', userId)
-        .eq('post_id', postId)
-        .maybeSingle();
-      setIsFavorited(!!data);
-    };
-    checkFavorite();
+    supabase
+      .from('favorites')
+      .select('post_id')
+      .eq('user_id', userId)
+      .eq('post_id', postId)
+      .maybeSingle()
+      .then(({ data }) => setIsFavorited(!!data));
   }, [userId, postId]);
 
   const handleToggle = async () => {
@@ -34,6 +33,10 @@ export default function FavoriteButton({ postId }: { postId: number }) {
       return;
     }
     setLoading(true);
+    const star = document.getElementById(`star-${postId}`);
+    if (star) {
+      animate(star, { scale: [1, 1.3, 1], duration: 200, easing: 'easeOutQuad' });
+    }
     if (isFavorited) {
       await supabase
         .from('favorites')
@@ -41,11 +44,15 @@ export default function FavoriteButton({ postId }: { postId: number }) {
         .eq('user_id', userId)
         .eq('post_id', postId);
       setIsFavorited(false);
+      if (star) star.style.filter = 'none';
     } else {
       await supabase
         .from('favorites')
         .insert({ user_id: userId, post_id: postId });
       setIsFavorited(true);
+      if (star) {
+        star.style.filter = 'brightness(0) saturate(100%) invert(67%) sepia(87%) saturate(4125%) hue-rotate(359deg) brightness(102%) contrast(106%)';
+      }
     }
     setLoading(false);
   };
@@ -54,10 +61,10 @@ export default function FavoriteButton({ postId }: { postId: number }) {
     <button
       onClick={handleToggle}
       disabled={loading}
-      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.4rem' }}
-      aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+      id={`star-${postId}`}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
     >
-      {isFavorited ? '⭐' : '☆'}
+      <Icon name="Star" size={18} />
     </button>
   );
 }
