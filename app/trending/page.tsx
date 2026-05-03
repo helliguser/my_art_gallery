@@ -5,6 +5,7 @@ import Link from 'next/link';
 import UserMenu from '@/components/UserMenu';
 import Avatar from '@/components/Avatar';
 import InfiniteScroll from '@/components/InfiniteScroll';
+import Icon from '@/components/Icon';
 
 type Post = {
   id: number;
@@ -12,7 +13,6 @@ type Post = {
   image_url: string;
   user_id: string;
   likes_count: number;
-  views: number;
   profile: {
     full_name: string | null;
     username: string | null;
@@ -45,18 +45,18 @@ export default function TrendingPage() {
     fetchTrending(1).finally(() => setInitialLoading(false));
   }, []);
 
-  const loadMore = () => {
+  const loadMore = async () => {
     const nextPage = page + 1;
     setPage(nextPage);
-    fetchTrending(nextPage);
+    await fetchTrending(nextPage);
   };
 
-  if (initialLoading) return <div className="container">Loading trending...</div>;
+  if (initialLoading) return null;
 
   return (
     <div className="container">
       <header className="header">
-        <h1 className="logo">🔥 Trending This Week</h1>
+        <h1 className="logo"><Icon name="Trending_Up" folder="interface" size={24} /> Furline – Trending</h1>
         <UserMenu />
       </header>
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
@@ -64,7 +64,6 @@ export default function TrendingPage() {
         <div className="gallery">
           {posts.map(post => {
             const authorName = post.profile?.full_name || post.profile?.username || 'Anonymous';
-            const popularity = (post.likes_count || 0) + (post.views || 0);
             return (
               <div key={post.id} className="card">
                 <Link href={`/post/${post.id}`}>
@@ -76,8 +75,8 @@ export default function TrendingPage() {
                     <Avatar url={post.profile?.avatar_url} size={24} />
                     <Link href={`/user/${post.user_id}`}>{authorName}</Link>
                   </div>
-                  <div className="card-actions" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    <span>🔥 {popularity}</span>
+                  <div className="card-actions">
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>❤️ {post.likes_count || 0}</span>
                   </div>
                 </div>
               </div>
