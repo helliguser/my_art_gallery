@@ -74,13 +74,14 @@ body {
 }
 
 .logo {
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-family: var(--font-playwrite-de-sas), cursive;
+  font-size: 2rem;
+  font-weight: 400;
   background: linear-gradient(135deg, #0070f3, #00c6ff);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  letter-spacing: -0.5px;
+  letter-spacing: 1px;
 }
 
 /* Кнопки и ссылки */
