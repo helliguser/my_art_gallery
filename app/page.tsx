@@ -95,42 +95,72 @@ export default function HomePage() {
   if (initialLoading) return null;
 
   return (
-    <div className="container">
-      <header className="header">
+    <div className="glass-container">
+      <header className="glass-header">
         <h1 className="logo">Furline</h1>
         <UserMenu />
       </header>
-      <div className="gallery-controls">
-        <div className="feed-toggle">
-          <button onClick={() => setFeedType('all')} className={`btn ${feedType === 'all' ? 'btn-primary' : 'btn-outline'}`}>All Artworks</button>
-          {isLoggedIn && <button onClick={() => setFeedType('following')} className={`btn ${feedType === 'following' ? 'btn-primary' : 'btn-outline'}`}>Following</button>}
+
+      {/* Панель фильтров */}
+      <div className="glass-filters">
+        <div className="filter-buttons">
+          <button onClick={() => setFeedType('all')} className={`glass-btn ${feedType === 'all' ? 'active' : ''}`}>All</button>
+          {isLoggedIn && <button onClick={() => setFeedType('following')} className={`glass-btn ${feedType === 'following' ? 'active' : ''}`}>Following</button>}
         </div>
-        <div className="search-group">
-          <input type="text" placeholder="Search by title..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="search-input" />
-          <div className="tag-search-wrapper">
-            <Icon name="Search_Magnifying_Glass" folder="interface" size={16} className="search-icon" />
-            <input type="text" placeholder="Search by tag (e.g. cat -dog)..." value={tagTerm} onChange={e => setTagTerm(e.target.value)} className="tag-search-input" />
-          </div>
-          <SaveSearchButton currentSearch={tagTerm} />
-        </div>
-        {popularTags.length > 0 && <div className="popular-tags">{popularTags.map(tag => <button key={tag.name} onClick={() => setTagTerm(tag.name)} className="tag-pill">{tag.name} ({tag.count})</button>)}</div>}
       </div>
+
+      {/* Блок поиска (основной) */}
+      <div className="glass-search-wrapper">
+        <div className="glass-search-field">
+          <Icon name="Search_Magnifying_Glass" folder="interface" size={18} />
+          <input
+            type="text"
+            placeholder="Search by title..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="glass-search-field">
+          <Icon name="Tag" folder="interface" size={18} />
+          <input
+            type="text"
+            placeholder="Search by tag (e.g. cat -dog)..."
+            value={tagTerm}
+            onChange={(e) => setTagTerm(e.target.value)}
+          />
+        </div>
+        <SaveSearchButton currentSearch={tagTerm} />
+      </div>
+
+      {/* Популярные теги (чипсы) */}
+      {popularTags.length > 0 && (
+        <div className="glass-tags-row">
+          {popularTags.map(tag => (
+            <button key={tag.name} onClick={() => setTagTerm(tag.name)} className="glass-tag-chip">
+              #{tag.name} <span className="tag-count">{tag.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Галерея */}
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
-        {posts.length === 0 && !loading && <p className="no-results">No artworks found.</p>}
-        <div className="gallery glass-grid">
+        {posts.length === 0 && !loading && <p className="glass-empty">No artworks found.</p>}
+        <div className="glass-gallery">
           {posts.map(post => {
             const authorName = post.profile?.full_name || post.profile?.username || 'Anonymous';
             return (
               <div key={post.id} className="glass-card">
                 <Link href={`/post/${post.id}`}>
-                  <img src={post.image_url} alt={post.title} className="card-image" />
+                  <img src={post.image_url} alt={post.title} className="glass-card-img" />
                 </Link>
-                <div className="card-info">
-                  <div className="card-author">
+                <div className="glass-card-content">
+                  <div className="glass-card-title">{post.title || 'Untitled'}</div>
+                  <div className="glass-card-author">
                     <Avatar url={post.profile?.avatar_url} size={24} name={authorName} />
                     <Link href={`/user/${post.user_id}`}>{authorName}</Link>
                   </div>
-                  <div className="card-stats">
+                  <div className="glass-card-actions">
                     <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
                   </div>
                 </div>

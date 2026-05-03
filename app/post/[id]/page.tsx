@@ -1,145 +1,111 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase-server';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import UserMenu from '@/components/UserMenu';
-import Avatar from '@/components/Avatar';
-import InfiniteScroll from '@/components/InfiniteScroll';
-import { useDebounce } from 'use-debounce';
-import { supabase } from '@/lib/supabase';
-import SaveSearchButton from '@/components/SaveSearchButton';
+import Comments from './Comments';
 import LikeButton from '@/components/LikeButton';
+import FavoriteButton from '@/components/FavoriteButton';
+import Avatar from '@/components/Avatar';
 import Icon from '@/components/Icon';
 
-type Post = {
-  id: number;
-  title: string;
-  image_url: string;
-  user_id: string;
-  likes_count: number;
-  profile: { full_name: string | null; username: string | null; avatar_url: string | null } | null;
-};
+export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
 
-export default function HomePage() {
-  const searchParams = useSearchParams();
-  const initialTag = searchParams.get('tag') || '';
-  const initialSearch = searchParams.get('search') || '';
+  await supabase.rpc('increment_post_views', { post_id: parseInt(id) });
 
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(initialSearch);
-  const [tagTerm, setTagTerm] = useState(initialTag);
-  const [debouncedSearch] = useDebounce(searchTerm, 500);
-  const [debouncedTag] = useDebounce(tagTerm, 500);
-  const [feedType, setFeedType] = useState<'all' | 'following'>('all');
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [popularTags, setPopularTags] = useState<{ name: string; count: number }[]>([]);
+  const { data: post, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setCurrentUserId(session?.user?.id || null);
-      setIsLoggedIn(!!session);
-    });
-  }, []);
+  if (error || !post) notFound();
 
-  useEffect(() => {
-    const fetchPopularTags = async () => {
-      const { data } = await supabase.from('post_tags').select('tags!inner(name)');
-      if (!data) return;
-      const counts: Record<string, number> = {};
-      for (const item of data) {
-        const name = (item as any).tags.name;
-        counts[name] = (counts[name] || 0) + 1;
-      }
-      const popular = Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10);
-      setPopularTags(popular);
-    };
-    fetchPopularTags();
-  }, []);
+  let authorProfile = { full_name: null, username: null, avatar_url: null };
+  if (post.user_id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, username, avatar_url')
+      .eq('id', post.user_id)
+      .single();
+    if (profile) authorProfile = profile;
+  }
 
-  useEffect(() => {
-    setPosts([]); setPage(1); setHasMore(true);
-    fetchPosts(1, debouncedSearch, debouncedTag, feedType);
-  }, [debouncedSearch, debouncedTag, feedType]);
+  const { data: { session } } = await supabase.auth.getSession();
+  const isAuthor = session?.user?.id === post.user_id;
+  const authorName = authorProfile.full_name || authorProfile.username || 'Anonymous';
 
-  const fetchPosts = async (pageNum: number, search: string, tag: string, type: 'all' | 'following') => {
-    setLoading(true);
-    let url = `/api/posts?page=${pageNum}&limit=12&search=${encodeURIComponent(search)}&following=${type === 'following'}`;
-    if (tag) url += `&tag=${encodeURIComponent(tag)}`;
-    if (type === 'following' && currentUserId) url += `&userId=${currentUserId}`;
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setPosts(prev => (pageNum === 1 ? data.posts : [...prev, ...data.posts]));
-      setHasMore(pageNum < data.totalPages);
-    } catch (err) { console.error(err); }
-    setLoading(false);
-  };
+  const { data: postTags } = await supabase
+    .from('post_tags')
+    .select('tag_id, tags(name)')
+    .eq('post_id', post.id);
+  const tags = postTags?.map(pt => (pt.tags as any).name) || [];
 
-  useEffect(() => {
-    fetchPosts(1, initialSearch, initialTag, 'all').finally(() => setInitialLoading(false));
-  }, []);
-
-  const loadMore = async () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    await fetchPosts(nextPage, debouncedSearch, debouncedTag, feedType);
-  };
-
-  if (initialLoading) return null;
+  const postRating = post.rating || 'safe';
+  const ratingColor: Record<string, string> = { safe: '#4caf50', questionable: '#ff9800', explicit: '#f44336' };
+  const ratingDisplay = postRating.toUpperCase();
 
   return (
-    <div className="container">
-      <header className="header glass-header">
+    <div className="glass-container post-container">
+      <header className="glass-header">
         <h1 className="logo">Furline</h1>
-        <UserMenu />
+        {/* Здесь можно добавить UserMenu, но на странице поста оно уже есть в layout, так что не дублируем */}
       </header>
-      <div className="glass-panel search-panel">
-        <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button onClick={() => setFeedType('all')} className={`btn ${feedType === 'all' ? 'btn-primary' : 'btn-outline'}`}>All Artworks</button>
-          {isLoggedIn && <button onClick={() => setFeedType('following')} className={`btn ${feedType === 'following' ? 'btn-primary' : 'btn-outline'}`}>Following</button>}
-        </div>
-        <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <input type="text" placeholder="Search by title..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="glass-input" style={{ flex: 2 }} />
-          <div style={{ position: 'relative', flex: 2 }}>
-            <input type="text" placeholder="Search by tag (e.g. cat -dog)..." value={tagTerm} onChange={e => setTagTerm(e.target.value)} className="glass-input" style={{ paddingLeft: '36px' }} />
-            <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-              <Icon name="Search_Magnifying_Glass" folder="interface" size={16} />
-            </div>
+
+      <div className="glass-post-card">
+        <Link href="/" className="glass-back-link">
+          <Icon name="Arrow_Left_LG" folder="arrow" size={16} />
+          Back
+        </Link>
+        <h1 className="glass-post-title">{post.title || 'Untitled'}</h1>
+        <img src={post.image_url} alt={post.title} className="glass-post-image" />
+        <div className="glass-post-meta">
+          <div className="glass-post-author">
+            <Avatar url={authorProfile.avatar_url} size={32} name={authorName} />
+            <span>by {authorName}</span>
           </div>
-          <SaveSearchButton currentSearch={tagTerm} />
+          <div className="glass-post-actions">
+            <span className="glass-rating" style={{ backgroundColor: ratingColor[postRating] + '20', color: ratingColor[postRating] }}>
+              {ratingDisplay}
+            </span>
+            <FavoriteButton postId={post.id} />
+            <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
+            {isAuthor && (
+              <Link href={`/post/${post.id}/edit`} className="glass-small-btn">Edit</Link>
+            )}
+          </div>
         </div>
-        {popularTags.length > 0 && <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>{popularTags.map(tag => <button key={tag.name} onClick={() => setTagTerm(tag.name)} className="btn btn-outline" style={{ fontSize: '0.8rem' }}>#{tag.name} ({tag.count})</button>)}</div>}
+
+        {tags.length > 0 && (
+          <div className="glass-tags-row post-tags">
+            {tags.map(tag => (
+              <Link key={tag} href={`/tag/${encodeURIComponent(tag)}`} className="glass-tag-chip">{tag}</Link>
+            ))}
+          </div>
+        )}
+
+        {/* Доп. информация из новых полей (source_url, artist_name, description) */}
+        {post.source_url && (
+          <div className="glass-info-row">
+            <Icon name="Link_Horizontal" folder="interface" size={14} />
+            <a href={post.source_url} target="_blank" rel="noopener noreferrer">Source</a>
+          </div>
+        )}
+        {post.artist_name && (
+          <div className="glass-info-row">
+            <Icon name="User" folder="interface" size={14} />
+            <span>Artist: {post.artist_name}</span>
+          </div>
+        )}
+        {post.description && (
+          <div className="glass-description">
+            <Icon name="Book_Open" folder="interface" size={14} />
+            <p>{post.description}</p>
+          </div>
+        )}
+
+        <Comments postId={post.id} />
       </div>
-      <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
-        {posts.length === 0 && !loading && <p style={{ textAlign: 'center' }}>No artworks found.</p>}
-        <div className="gallery glass-gallery">
-          {posts.map(post => {
-            const authorName = post.profile?.full_name || post.profile?.username || 'Anonymous';
-            return (
-              <div key={post.id} className="card glass-card">
-                <Link href={`/post/${post.id}`}><img src={post.image_url} alt={post.title} /></Link>
-                <div className="card-content">
-                  <div className="card-title">{post.title}</div>
-                  <div className="card-author">
-                    <Avatar url={post.profile?.avatar_url} size={24} name={authorName} />
-                    <Link href={`/user/${post.user_id}`}>{authorName}</Link>
-                  </div>
-                  <div className="card-actions">
-                    <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </InfiniteScroll>
     </div>
   );
 }
