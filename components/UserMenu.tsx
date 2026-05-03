@@ -33,19 +33,12 @@ export default function UserMenu() {
 
   useEffect(() => {
     if (!user?.id) return;
-    supabase
-      .from('profiles')
-      .select('avatar_url')
-      .eq('id', user.id)
-      .single()
-      .then(({ data }) => setAvatarUrl(data?.avatar_url || null));
+    supabase.from('profiles').select('avatar_url').eq('id', user.id).single().then(({ data }) => setAvatarUrl(data?.avatar_url || null));
   }, [user?.id]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -54,19 +47,9 @@ export default function UserMenu() {
   useEffect(() => {
     if (menuRef.current) {
       if (isOpen) {
-        animate(menuRef.current, {
-          translateY: [-10, 0],
-          opacity: [0, 1],
-          duration: 200,
-          easing: 'easeOutQuad',
-        });
+        animate(menuRef.current, { translateY: [-10, 0], opacity: [0, 1], duration: 200, easing: 'easeOutQuad' });
       } else {
-        animate(menuRef.current, {
-          translateY: [0, -10],
-          opacity: [1, 0],
-          duration: 150,
-          easing: 'easeOutQuad',
-        });
+        animate(menuRef.current, { translateY: [0, -10], opacity: [1, 0], duration: 150, easing: 'easeOutQuad' });
       }
     }
   }, [isOpen]);
@@ -95,7 +78,7 @@ export default function UserMenu() {
       <div className="user-dropdown-trigger" onClick={() => setIsOpen(!isOpen)}>
         <Avatar url={avatarUrl} size={32} />
         <span className="user-greeting">{displayName}</span>
-        <Icon name="Caret_Down_MD" folder="arrow" size={12} />
+        <Icon name="Caret_Down_SM" folder="arrow" size={12} />
       </div>
       {isOpen && (
         <div className="user-dropdown-menu" ref={menuRef}>

@@ -42,22 +42,14 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const tags = postTags?.map(pt => (pt.tags as any).name) || [];
 
   const postRating = post.rating || 'safe';
-  const ratingColor: Record<string, string> = {
-    safe: 'green',
-    questionable: 'orange',
-    explicit: 'red',
-  };
+  const ratingColor: Record<string, string> = { safe: 'green', questionable: 'orange', explicit: 'red' };
   const ratingDisplay = postRating.toUpperCase();
   const color = ratingColor[postRating] || 'gray';
 
   return (
     <div className="container">
       <div className="post-page">
-        <Link
-          href="/"
-          className="btn btn-outline"
-          style={{ marginBottom: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
-        >
+        <Link href="/" className="btn btn-outline" style={{ marginBottom: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
           <Icon name="Arrow_Left_LG" folder="arrow" size={16} />
           Back
         </Link>
@@ -67,35 +59,22 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           <Avatar url={authorProfile.avatar_url} size={32} />
           <div>by {authorName}</div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span title={`Rating: ${postRating}`} style={{ color: color, fontWeight: 'bold' }}>
-              {ratingDisplay}
-            </span>
+            <span title={`Rating: ${postRating}`} style={{ color, fontWeight: 'bold' }}>{ratingDisplay}</span>
             <FavoriteButton postId={post.id} />
             <span>👁️ {post.views || 0}</span>
             <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
             {isAuthor && (
-              <Link href={`/post/${post.id}/edit`} className="btn btn-secondary" style={{ fontSize: '0.8rem' }}>
-                Edit
-              </Link>
+              <Link href={`/post/${post.id}/edit`} className="btn btn-secondary" style={{ fontSize: '0.8rem' }}>Edit</Link>
             )}
           </div>
         </div>
-
         {tags.length > 0 && (
           <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             {tags.map(tag => (
-              <Link
-                key={tag}
-                href={`/tag/${encodeURIComponent(tag)}`}
-                className="btn btn-outline"
-                style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
-              >
-                #{tag}
-              </Link>
+              <Link key={tag} href={`/tag/${encodeURIComponent(tag)}`} className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}>#{tag}</Link>
             ))}
           </div>
         )}
-
         <Comments postId={post.id} />
       </div>
     </div>
