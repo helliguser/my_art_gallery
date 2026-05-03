@@ -4,8 +4,8 @@ import Animations from '@/components/Animations';
 import PageLoader from '@/components/PageLoader';
 
 export const metadata = {
-  title: 'Furline | Art Gallery',
-  description: 'Share and discover amazing artwork',
+  title: 'Furbyte',
+  description: 'Furry art community',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

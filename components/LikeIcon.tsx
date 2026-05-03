@@ -1,11 +1,9 @@
-'use client';
-
 interface LikeIconProps {
-  filled: boolean;
+  filled?: boolean;
   size?: number;
 }
 
-export default function LikeIcon({ filled, size = 18 }: LikeIconProps) {
+export default function LikeIcon({ filled = false, size = 18 }: LikeIconProps) {
   return (
     <svg
       width={size}

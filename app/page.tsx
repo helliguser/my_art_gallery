@@ -9,6 +9,7 @@ import InfiniteScroll from '@/components/InfiniteScroll';
 import { useDebounce } from 'use-debounce';
 import { supabase } from '@/lib/supabase';
 import SaveSearchButton from '@/components/SaveSearchButton';
+import LikeIcon from '@/components/LikeIcon'; // не кликабельная иконка
 import Icon from '@/components/Icon';
 
 type Post = {
@@ -96,7 +97,7 @@ export default function HomePage() {
   return (
     <div className="container">
       <header className="header">
-        <h1 className="logo">Furline</h1>
+        <h1 className="logo">Furbyte</h1>
         <UserMenu />
       </header>
       <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -106,7 +107,7 @@ export default function HomePage() {
       <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <input type="text" placeholder="Search by title..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ flex: 2, minWidth: '200px', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--input-border)' }} />
         <div style={{ position: 'relative', flex: 2 }}>
-          <input type="text" placeholder="Search by tag..." value={tagTerm} onChange={e => setTagTerm(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.5rem 0.5rem 28px', borderRadius: '8px', border: '1px solid var(--input-border)' }} />
+          <input type="text" placeholder="Search by tag (e.g. cat -dog)..." value={tagTerm} onChange={e => setTagTerm(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.5rem 0.5rem 28px', borderRadius: '8px', border: '1px solid var(--input-border)' }} />
           <div style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
             <Icon name="Search_Magnifying_Glass" folder="interface" size={16} />
           </div>
@@ -115,7 +116,7 @@ export default function HomePage() {
       </div>
       {popularTags.length > 0 && <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>{popularTags.map(tag => <button key={tag.name} onClick={() => setTagTerm(tag.name)} className="btn btn-outline" style={{ fontSize: '0.8rem' }}>#{tag.name} ({tag.count})</button>)}</div>}
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
-        {posts.length === 0 && !loading && <p>No artworks found.</p>}
+        {posts.length === 0 && !loading && <p style={{ textAlign: 'center' }}>No artworks found.</p>}
         <div className="gallery">
           {posts.map(post => {
             const authorName = post.profile?.full_name || post.profile?.username || 'Anonymous';
@@ -124,9 +125,13 @@ export default function HomePage() {
                 <Link href={`/post/${post.id}`}><img src={post.image_url} alt={post.title} /></Link>
                 <div className="card-content">
                   <div className="card-title">{post.title}</div>
-                  <div className="card-author"><Avatar url={post.profile?.avatar_url} size={24} /><Link href={`/user/${post.user_id}`}>{authorName}</Link></div>
-                  <div className="card-actions" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>❤️ {post.likes_count || 0}</span>
+                  <div className="card-author">
+                    <Avatar url={post.profile?.avatar_url} size={24} />
+                    <Link href={`/user/${post.user_id}`}>{authorName}</Link>
+                  </div>
+                  <div className="card-actions" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <LikeIcon filled={false} size={16} />
+                    <span>{post.likes_count || 0}</span>
                   </div>
                 </div>
               </div>
