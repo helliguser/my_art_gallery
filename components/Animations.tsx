@@ -23,7 +23,18 @@ export default function Animations() {
     const existing = Array.from(document.querySelectorAll('.card'));
     if (existing.length) animateBatch(existing);
 
-    // Следим за новыми карточками (бесконечный скролл)
+    // Анимация логотипа
+    const logo = document.querySelector('.logo');
+    if (logo) {
+      animate(logo, {
+        translateY: [-20, 0],
+        opacity: [0, 1],
+        duration: 800,
+        easing: 'spring(1.2, 80, 10, 0)',
+      });
+    }
+
+    // Наблюдатель за новыми карточками (бесконечный скролл)
     const observer = new MutationObserver(() => {
       const newCards = Array.from(document.querySelectorAll('.card')).filter(c => !animated.current.has(c));
       if (newCards.length) animateBatch(newCards);
