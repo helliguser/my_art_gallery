@@ -100,36 +100,37 @@ export default function HomePage() {
         <h1 className="logo">Furline</h1>
         <UserMenu />
       </header>
-      <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        <button onClick={() => setFeedType('all')} className={`btn ${feedType === 'all' ? 'btn-primary' : 'btn-outline'}`}>All Artworks</button>
-        {isLoggedIn && <button onClick={() => setFeedType('following')} className={`btn ${feedType === 'following' ? 'btn-primary' : 'btn-outline'}`}>Following</button>}
-      </div>
-      <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        <input type="text" placeholder="Search by title..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ flex: 2, minWidth: '200px', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--input-border)' }} />
-        <div style={{ position: 'relative', flex: 2 }}>
-          <input type="text" placeholder="Search by tag (e.g. cat -dog)..." value={tagTerm} onChange={e => setTagTerm(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.5rem 0.5rem 28px', borderRadius: '8px', border: '1px solid var(--input-border)' }} />
-          <div style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-            <Icon name="Search_Magnifying_Glass" folder="interface" size={16} />
-          </div>
+      <div className="gallery-controls">
+        <div className="feed-toggle">
+          <button onClick={() => setFeedType('all')} className={`btn ${feedType === 'all' ? 'btn-primary' : 'btn-outline'}`}>All Artworks</button>
+          {isLoggedIn && <button onClick={() => setFeedType('following')} className={`btn ${feedType === 'following' ? 'btn-primary' : 'btn-outline'}`}>Following</button>}
         </div>
-        <SaveSearchButton currentSearch={tagTerm} />
+        <div className="search-group">
+          <input type="text" placeholder="Search by title..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="search-input" />
+          <div className="tag-search-wrapper">
+            <Icon name="Search_Magnifying_Glass" folder="interface" size={16} className="search-icon" />
+            <input type="text" placeholder="Search by tag (e.g. cat -dog)..." value={tagTerm} onChange={e => setTagTerm(e.target.value)} className="tag-search-input" />
+          </div>
+          <SaveSearchButton currentSearch={tagTerm} />
+        </div>
+        {popularTags.length > 0 && <div className="popular-tags">{popularTags.map(tag => <button key={tag.name} onClick={() => setTagTerm(tag.name)} className="tag-pill">{tag.name} ({tag.count})</button>)}</div>}
       </div>
-      {popularTags.length > 0 && <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>{popularTags.map(tag => <button key={tag.name} onClick={() => setTagTerm(tag.name)} className="btn btn-outline" style={{ fontSize: '0.8rem' }}>#{tag.name} ({tag.count})</button>)}</div>}
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
-        {posts.length === 0 && !loading && <p style={{ textAlign: 'center' }}>No artworks found.</p>}
-        <div className="gallery">
+        {posts.length === 0 && !loading && <p className="no-results">No artworks found.</p>}
+        <div className="gallery glass-grid">
           {posts.map(post => {
             const authorName = post.profile?.full_name || post.profile?.username || 'Anonymous';
             return (
-              <div key={post.id} className="card">
-                <Link href={`/post/${post.id}`}><img src={post.image_url} alt={post.title} /></Link>
-                <div className="card-content">
-                  <div className="card-title">{post.title}</div>
+              <div key={post.id} className="glass-card">
+                <Link href={`/post/${post.id}`}>
+                  <img src={post.image_url} alt={post.title} className="card-image" />
+                </Link>
+                <div className="card-info">
                   <div className="card-author">
-                    <Avatar url={post.profile?.avatar_url} size={24} />
+                    <Avatar url={post.profile?.avatar_url} size={24} name={authorName} />
                     <Link href={`/user/${post.user_id}`}>{authorName}</Link>
                   </div>
-                  <div className="card-actions" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.25rem', marginTop: '0.5rem' }}>
+                  <div className="card-stats">
                     <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
                   </div>
                 </div>
