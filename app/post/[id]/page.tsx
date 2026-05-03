@@ -11,7 +11,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const supabase = await createClient();
 
-  // Увеличиваем счётчик просмотров
   await supabase.rpc('increment_post_views', { post_id: parseInt(id) });
 
   const { data: post, error } = await supabase
@@ -36,7 +35,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const isAuthor = session?.user?.id === post.user_id;
   const authorName = authorProfile.full_name || authorProfile.username || 'Anonymous';
 
-  // Получаем теги этого поста
   const { data: postTags } = await supabase
     .from('post_tags')
     .select('tag_id, tags(name)')
@@ -60,7 +58,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           className="btn btn-outline"
           style={{ marginBottom: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
         >
-          <Icon name="Arrow_Left_MD" size={16} />
+          <Icon name="arrow/Arrow_Left_MD" size={16} />
           Back
         </Link>
         <h1 className="post-title">{post.title}</h1>

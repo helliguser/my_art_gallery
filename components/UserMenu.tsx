@@ -95,7 +95,7 @@ export default function UserMenu() {
       <div className="user-dropdown-trigger" onClick={() => setIsOpen(!isOpen)}>
         <Avatar url={avatarUrl} size={32} />
         <span className="user-greeting">{displayName}</span>
-        <Icon name={isOpen ? 'Caret_Up_SM' : 'Caret_Down_SM'} size={12} />
+        <Icon name="arrow/Caret_Down_SM" size={12} />
       </div>
       {isOpen && (
         <div className="user-dropdown-menu" ref={menuRef}>

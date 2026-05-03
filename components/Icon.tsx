@@ -1,16 +1,18 @@
 import Image from 'next/image';
 
-type IconProps = {
-  name: string;      // имя файла без расширения, например "Arrow_Left_MD"
+interface IconProps {
+  name: string;      // относительный путь от public/icons, например "arrow/Arrow_Left_MD"
   size?: number;
   className?: string;
-};
+}
 
 export default function Icon({ name, size = 20, className = '' }: IconProps) {
+  // если имя уже начинается с icons/, не добавляем, иначе добавляем /icons/
+  const src = name.startsWith('/') ? name : `/icons/${name}.svg`;
   return (
     <img
-      src={`/icons/arrow/${name}.svg`}
-      alt={name}
+      src={src}
+      alt={name.split('/').pop()}
       width={size}
       height={size}
       className={className}
