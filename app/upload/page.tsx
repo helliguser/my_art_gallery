@@ -5,9 +5,9 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import UserMenu from '@/components/UserMenu';
+import Icon from '@/components/Icon';
 
 export default function UploadPage() {
-  const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [sourceUrl, setSourceUrl] = useState('');
   const [artistName, setArtistName] = useState('');
@@ -30,7 +30,6 @@ export default function UploadPage() {
     });
   }, [router]);
 
-  // Автодополнение тегов
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (!tagInput.trim()) {
@@ -42,11 +41,8 @@ export default function UploadPage() {
         .select('id, name')
         .ilike('name', `%${tagInput}%`)
         .limit(10);
-      if (!error && data) {
-        setTagSuggestions(data);
-      } else {
-        setTagSuggestions([]);
-      }
+      if (!error && data) setTagSuggestions(data);
+      else setTagSuggestions([]);
     };
     const delay = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(delay);
@@ -76,7 +72,6 @@ export default function UploadPage() {
     if (!file || !user) return;
     setUploading(true);
 
-    // 1. Загрузка файла
     const fileName = `${Date.now()}_${file.name}`;
     const { error: uploadError } = await supabase.storage
       .from('images')
@@ -90,11 +85,9 @@ export default function UploadPage() {
       .from('images')
       .getPublicUrl(fileName);
 
-    // 2. Вставка поста
     const { data: post, error: insertError } = await supabase
       .from('posts')
       .insert({
-        title,
         image_url: publicUrl,
         user_id: user.id,
         rating,
@@ -111,7 +104,6 @@ export default function UploadPage() {
       return;
     }
 
-    // 3. Обработка тегов
     for (const tagName of tags) {
       let tagId = null;
       const { data: existing } = await supabase
@@ -136,8 +128,6 @@ export default function UploadPage() {
 
     setUploading(false);
     alert('Artwork published!');
-    // Сброс формы
-    setTitle('');
     setFile(null);
     setSourceUrl('');
     setArtistName('');
@@ -167,7 +157,7 @@ export default function UploadPage() {
             
             {/* File */}
             <div className="upload-group">
-              <label className="upload-label">📁 File *</label>
+              <label className="upload-label"><Icon name="Download" folder="interface" size={16} /> File *</label>
               <div className="file-drop-zone">
                 <input
                   ref={fileInputRef}
@@ -181,22 +171,9 @@ export default function UploadPage() {
               </div>
             </div>
 
-            {/* Title */}
-            <div className="upload-group">
-              <label className="upload-label">🏷️ Title *</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Give your artwork a title"
-                className="upload-input"
-                required
-              />
-            </div>
-
             {/* Source URL */}
             <div className="upload-group">
-              <label className="upload-label">🔗 Source URL</label>
+              <label className="upload-label"><Icon name="Link_Horizontal" folder="interface" size={16} /> Source URL</label>
               <input
                 type="url"
                 value={sourceUrl}
@@ -208,7 +185,7 @@ export default function UploadPage() {
 
             {/* Artist Name */}
             <div className="upload-group">
-              <label className="upload-label">🎨 Artist</label>
+              <label className="upload-label"><Icon name="User" folder="interface" size={16} /> Artist</label>
               <input
                 type="text"
                 value={artistName}
@@ -218,9 +195,9 @@ export default function UploadPage() {
               />
             </div>
 
-            {/* Tags (основное поле) */}
+            {/* Tags */}
             <div className="upload-group">
-              <label className="upload-label">🏷️ Tags *</label>
+              <label className="upload-label"><Icon name="Tag" folder="interface" size={16} /> Tags *</label>
               <div className="tags-input-wrapper">
                 <div className="tags-list">
                   {tags.map(tag => (
@@ -257,7 +234,7 @@ export default function UploadPage() {
 
             {/* Rating */}
             <div className="upload-group">
-              <label className="upload-label">🔞 Rating</label>
+              <label className="upload-label"><Icon name="Star" folder="interface" size={16} /> Rating</label>
               <div className="rating-group">
                 <label className={`rating-chip ${rating === 'safe' ? 'active' : ''}`}>
                   <input type="radio" name="rating" value="safe" checked={rating === 'safe'} onChange={() => setRating('safe')} /> Safe
@@ -273,7 +250,7 @@ export default function UploadPage() {
 
             {/* Description */}
             <div className="upload-group">
-              <label className="upload-label">📝 Description</label>
+              <label className="upload-label"><Icon name="Book_Open" folder="interface" size={16} /> Description</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -283,7 +260,7 @@ export default function UploadPage() {
               />
             </div>
 
-            <button type="submit" disabled={uploading || !title || !file} className="upload-button">
+            <button type="submit" disabled={uploading || !file} className="upload-button">
               {uploading ? 'Uploading...' : 'Publish Artwork'}
             </button>
           </form>
