@@ -105,7 +105,8 @@ export default function HomePage() {
     await fetchPosts(nextPage, debouncedSearch, debouncedTag, feedType);
   };
 
-  if (initialLoading) return <div className="container">Loading...</div>;
+  // Убираем локальный лоадер – теперь загрузку обрабатывает глобальный PageLoader
+  if (initialLoading) return null;
 
   return (
     <div className="container">
@@ -113,7 +114,6 @@ export default function HomePage() {
         <h1 className="logo">Art Gallery</h1>
         <UserMenu />
       </header>
-
       <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <button
           onClick={() => setFeedType('all')}
@@ -130,7 +130,6 @@ export default function HomePage() {
           </button>
         )}
       </div>
-
       <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <input
           type="text"
@@ -148,7 +147,6 @@ export default function HomePage() {
         />
         <SaveSearchButton currentSearch={tagTerm} />
       </div>
-
       {popularTags.length > 0 && (
         <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
           {popularTags.map(tag => (
@@ -163,7 +161,6 @@ export default function HomePage() {
           ))}
         </div>
       )}
-
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
         {posts.length === 0 && !loading && <p style={{ textAlign: 'center' }}>No artworks found.</p>}
         <div className="gallery">

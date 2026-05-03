@@ -10,15 +10,13 @@ export default function PageLoader() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Показываем лоадер при изменении маршрута
     setLoading(true);
     const loader = document.getElementById('page-loader');
     if (loader) loader.style.display = 'flex';
 
-    // Скрываем лоадер после загрузки страницы
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 300);
+    }, 300); // задержка, чтобы анимация спиннера успела показаться
 
     return () => clearTimeout(timer);
   }, [pathname, searchParams]);
@@ -33,7 +31,6 @@ export default function PageLoader() {
         duration: 300,
         easing: 'easeOutQuad',
       });
-      // Анимация спиннера
       const spinner = loader.querySelector('.loader-spinner');
       if (spinner) {
         animate(spinner, {
@@ -49,7 +46,7 @@ export default function PageLoader() {
         duration: 300,
         easing: 'easeOutQuad',
         complete: () => {
-          loader.style.display = 'none';
+          if (loader) loader.style.display = 'none';
         },
       });
     }
@@ -58,23 +55,26 @@ export default function PageLoader() {
   if (!loading) return null;
 
   return (
-    <div id="page-loader" style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      background: 'var(--bg)',
-      zIndex: 9999,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'column',
-      gap: '1rem',
-      transition: 'background 0.3s',
-    }}>
+    <div
+      id="page-loader"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: 'var(--bg)',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: '1rem',
+        transition: 'background 0.3s',
+      }}
+    >
       <div className="loader-spinner" />
-      <div className="loader-text">Loading...</div>
+      <div className="loader-text">Loading</div>
     </div>
   );
 }
