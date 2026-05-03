@@ -24,6 +24,8 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
     });
   }, [postId]);
 
+  const heartRedFilter = "brightness(0) saturate(100%) invert(22%) sepia(84%) saturate(6797%) hue-rotate(357deg) brightness(96%) contrast(117%)";
+
   const handleLike = async () => {
     if (loading) return;
     setLoading(true);
@@ -33,6 +35,7 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       setLoading(false);
       return;
     }
+    const heartEl = document.getElementById(heartId);
     if (userLiked) {
       const { error } = await supabase
         .from('likes')
@@ -42,15 +45,9 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       if (!error) {
         setLikes(prev => prev - 1);
         setUserLiked(false);
-        const heart = document.getElementById(heartId);
-        if (heart) {
-          animate(heart, {
-            scale: [1.2, 1],
-            duration: 200,
-            easing: 'easeOutQuad',
-          });
-          // возвращаем исходный цвет (фильтр убираем)
-          heart.style.filter = 'none';
+        if (heartEl) {
+          animate(heartEl, { scale: [1.2, 1], duration: 200 });
+          heartEl.style.filter = 'none';
         }
       }
     } else {
@@ -60,19 +57,13 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       if (!error) {
         setLikes(prev => prev + 1);
         setUserLiked(true);
-        const heart = document.getElementById(heartId);
-        if (heart) {
-          animate(heart, {
+        if (heartEl) {
+          animate(heartEl, {
             scale: [1, 1.5, 1],
             duration: 400,
             easing: 'spring(1.2, 80, 10, 0)',
           });
-          // анимируем цвет к красному
-          animate(heart, {
-            filter: ['brightness(1) sepia(0) hue-rotate(0deg) saturate(0%)', 'brightness(0) saturate(100%) invert(27%) sepia(95%) saturate(7485%) hue-rotate(356deg) brightness(100%) contrast(112%)'],
-            duration: 400,
-            easing: 'easeOutQuad',
-          });
+          heartEl.style.filter = heartRedFilter;
         }
       }
     }
@@ -87,7 +78,7 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       className="like-button"
       style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
     >
-      <Icon name="Heart_01" size={18} />
+      <Icon name="Heart_01" folder="interface" size={18} />
       <span>{likes}</span>
     </button>
   );

@@ -58,7 +58,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           className="btn btn-outline"
           style={{ marginBottom: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
         >
-          <Icon name="arrow/Arrow_Left_MD" size={16} />
+          <Icon name="Arrow_Left_LG" folder="arrow" size={16} />
           Back
         </Link>
         <h1 className="post-title">{post.title}</h1>

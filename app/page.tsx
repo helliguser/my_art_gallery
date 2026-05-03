@@ -9,6 +9,7 @@ import InfiniteScroll from '@/components/InfiniteScroll';
 import { useDebounce } from 'use-debounce';
 import { supabase } from '@/lib/supabase';
 import SaveSearchButton from '@/components/SaveSearchButton';
+import Icon from '@/components/Icon';
 
 type Post = {
   id: number;
@@ -105,8 +106,7 @@ export default function HomePage() {
     await fetchPosts(nextPage, debouncedSearch, debouncedTag, feedType);
   };
 
-  // Убираем локальный лоадер – теперь загрузку обрабатывает глобальный PageLoader
-  if (initialLoading) return null;
+  if (initialLoading) return null; // глобальный лоадер
 
   return (
     <div className="container">
@@ -179,7 +179,8 @@ export default function HomePage() {
                   </div>
                   <div className="card-actions" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
                     <span>👁️ {post.views || 0}</span>
-                    <span>❤️ {post.likes_count || 0}</span>
+                    <Icon name="Heart_01" folder="interface" size={14} />
+                    <span>{post.likes_count || 0}</span>
                   </div>
                 </div>
               </div>
