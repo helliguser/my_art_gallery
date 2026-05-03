@@ -97,7 +97,7 @@ export default function HomePage() {
   return (
     <div className="container">
       <header className="header">
-        <h1 className="logo">Furbyte</h1>
+        <h1 className="logo">Furline</h1>
         <UserMenu />
       </header>
       <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
