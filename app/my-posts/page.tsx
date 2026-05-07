@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Logo from '@/components/Logo';
+import UserMenu from '@/components/UserMenu';
 import DeletePostButton from './DeletePostButton';
 import Icon from '@/components/Icon';
 
@@ -8,9 +10,7 @@ export default async function MyPostsPage() {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
-  if (!session) {
-    redirect('/login?redirect_to=/my-posts');
-  }
+  if (!session) redirect('/login?redirect_to=/my-posts');
 
   const { data: posts, error } = await supabase
     .from('posts')
@@ -18,18 +18,13 @@ export default async function MyPostsPage() {
     .eq('user_id', session.user.id)
     .order('created_at', { ascending: false });
 
-  if (error) {
-    return <div className="container">Error loading your posts: {error.message}</div>;
-  }
+  if (error) return <div className="container">Error loading your posts: {error.message}</div>;
 
   return (
     <div className="container">
       <header className="header">
-        <h1 className="logo">My Posts</h1>
-        <Link href="/" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Icon name="arrow/Arrow_Left_MD" size={16} />
-          Back to Gallery
-        </Link>
+        <Logo />
+        <UserMenu />
       </header>
       {posts.length === 0 ? (
         <p>You haven't posted anything yet. <Link href="/upload">Upload your first artwork</Link></p>

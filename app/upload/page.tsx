@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Logo from '@/components/Logo';
 import UserMenu from '@/components/UserMenu';
 import Icon from '@/components/Icon';
 
@@ -146,7 +147,7 @@ export default function UploadPage() {
     <>
       <div className="container">
         <header className="header">
-          <h1 className="logo">Furline</h1>
+          <Logo />
           <UserMenu />
         </header>
       </div>
@@ -154,8 +155,6 @@ export default function UploadPage() {
         <div className="upload-card">
           <h2 className="upload-title">Share your artwork</h2>
           <form onSubmit={(e) => { e.preventDefault(); handleUpload(); }} className="upload-form">
-            
-            {/* File */}
             <div className="upload-group">
               <label className="upload-label"><Icon name="Download" folder="interface" size={16} /> File *</label>
               <div className="file-drop-zone">
@@ -170,8 +169,6 @@ export default function UploadPage() {
                 <p className="file-hint">JPG, PNG, GIF, WebP (max 20MB)</p>
               </div>
             </div>
-
-            {/* Source URL */}
             <div className="upload-group">
               <label className="upload-label"><Icon name="Link_Horizontal" folder="interface" size={16} /> Source URL</label>
               <input
@@ -182,8 +179,6 @@ export default function UploadPage() {
                 className="upload-input"
               />
             </div>
-
-            {/* Artist Name */}
             <div className="upload-group">
               <label className="upload-label"><Icon name="User" folder="interface" size={16} /> Artist</label>
               <input
@@ -194,8 +189,6 @@ export default function UploadPage() {
                 className="upload-input"
               />
             </div>
-
-            {/* Tags */}
             <div className="upload-group">
               <label className="upload-label"><Icon name="Tag" folder="interface" size={16} /> Tags *</label>
               <div className="tags-input-wrapper">
@@ -231,8 +224,6 @@ export default function UploadPage() {
                 )}
               </div>
             </div>
-
-            {/* Rating */}
             <div className="upload-group">
               <label className="upload-label"><Icon name="Star" folder="interface" size={16} /> Rating</label>
               <div className="rating-group">
@@ -247,8 +238,6 @@ export default function UploadPage() {
                 </label>
               </div>
             </div>
-
-            {/* Description */}
             <div className="upload-group">
               <label className="upload-label"><Icon name="Book_Open" folder="interface" size={16} /> Description</label>
               <textarea
@@ -259,7 +248,6 @@ export default function UploadPage() {
                 className="upload-textarea"
               />
             </div>
-
             <button type="submit" disabled={uploading || !file} className="upload-button">
               {uploading ? 'Uploading...' : 'Publish Artwork'}
             </button>

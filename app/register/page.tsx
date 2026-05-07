@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Logo from '@/components/Logo';
 import UserMenu from '@/components/UserMenu';
 
 export default function RegisterPage() {
@@ -27,35 +28,19 @@ export default function RegisterPage() {
     setError('');
 
     const usernameError = validateUsername(username);
-    if (usernameError) {
-      setError(usernameError);
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
+    if (usernameError) { setError(usernameError); return; }
+    if (password !== confirmPassword) { setError('Passwords do not match'); return; }
+    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
 
     setLoading(true);
-
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: { username, full_name: username },
-      },
+      options: { data: { username, full_name: username } },
     });
 
     if (signUpError) {
-      if (signUpError.message.includes('rate limit')) {
-        setError('Too many registration attempts. Please try again later.');
-      } else {
-        setError(signUpError.message);
-      }
+      setError(signUpError.message);
       setLoading(false);
       return;
     }
@@ -69,20 +54,12 @@ export default function RegisterPage() {
 
     const { error: profileError } = await supabase
       .from('profiles')
-      .insert({
-        id: userId,
-        username,
-        full_name: username,
-        birth_date: birthDate || null,
-      });
+      .insert({ id: userId, username, full_name: username, birth_date: birthDate || null });
 
     if (profileError) {
-      console.error('Profile creation error:', profileError);
-      setError('Profile creation failed, but you may still log in. Contact support.');
-      setLoading(false);
-      return;
+      console.error(profileError);
+      setError('Profile creation failed, but you may still log in.');
     }
-
     router.push('/');
   };
 
@@ -90,7 +67,7 @@ export default function RegisterPage() {
     <>
       <div className="container">
         <header className="header">
-          <h1 className="logo">Furline</h1>
+          <Logo />
           <UserMenu />
         </header>
       </div>
@@ -98,63 +75,15 @@ export default function RegisterPage() {
         <div className="register-card">
           <h2 className="register-title">Join Furline</h2>
           <form onSubmit={handleSubmit} className="register-form">
-            <div className="input-group">
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="register-input"
-              />
-            </div>
-            <div className="input-group">
-              <input
-                type="text"
-                placeholder="Username (public)"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                className="register-input"
-              />
-            </div>
-            <div className="input-group">
-              <input
-                type="password"
-                placeholder="Password (min 6 chars)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="register-input"
-              />
-            </div>
-            <div className="input-group">
-              <input
-                type="password"
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className="register-input"
-              />
-            </div>
-            <div className="input-group">
-              <input
-                type="date"
-                placeholder="Date of birth (optional)"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="register-input"
-              />
-            </div>
+            <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="register-input" />
+            <input type="text" placeholder="Username (public)" value={username} onChange={e => setUsername(e.target.value)} required className="register-input" />
+            <input type="password" placeholder="Password (min 6 chars)" value={password} onChange={e => setPassword(e.target.value)} required className="register-input" />
+            <input type="password" placeholder="Confirm password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="register-input" />
+            <input type="date" placeholder="Date of birth (optional)" value={birthDate} onChange={e => setBirthDate(e.target.value)} className="register-input" />
             {error && <div className="register-error">{error}</div>}
-            <button type="submit" disabled={loading} className="register-button">
-              {loading ? 'Registering...' : 'Register'}
-            </button>
+            <button type="submit" disabled={loading} className="register-button">{loading ? 'Registering...' : 'Register'}</button>
           </form>
-          <p className="register-footer">
-            Already a member? <Link href="/login">Log in</Link>
-          </p>
+          <p className="register-footer">Already a member? <Link href="/login">Log in</Link></p>
         </div>
       </div>
     </>

@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Logo from '@/components/Logo';
+import UserMenu from '@/components/UserMenu';
 import Avatar from '@/components/Avatar';
+import Icon from '@/components/Icon';
 
 type Profile = {
   id: string;
@@ -101,7 +104,10 @@ export default function ProfilePage() {
   if (editing) {
     return (
       <div className="container">
-        <Link href="/" className="btn btn-outline">← Back</Link>
+        <header className="header">
+          <Logo />
+          <UserMenu />
+        </header>
         <h1>Edit Profile</h1>
         <div style={{ marginBottom: '1rem' }}>
           <label>Avatar</label>
@@ -138,7 +144,10 @@ export default function ProfilePage() {
 
   return (
     <div className="container">
-      <Link href="/" className="btn btn-outline">← Back to Gallery</Link>
+      <header className="header">
+        <Logo />
+        <UserMenu />
+      </header>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
         <Avatar url={profile.avatar_url} size={100} />
         <div>

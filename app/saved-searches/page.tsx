@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Logo from '@/components/Logo';
 import UserMenu from '@/components/UserMenu';
 
 export default async function SavedSearchesPage() {
@@ -14,23 +15,22 @@ export default async function SavedSearchesPage() {
     .eq('user_id', session.user.id)
     .order('created_at', { ascending: false });
 
-  if (error) {
-    return <div className="container">Error loading saved searches</div>;
-  }
+  if (error) return <div className="container">Error loading saved searches</div>;
 
   return (
     <div className="container">
       <header className="header">
-        <h1 className="logo">Saved Searches</h1>
+        <Logo />
         <UserMenu />
       </header>
+      <h1>Saved Searches</h1>
       {searches.length === 0 ? (
-        <p>You haven't saved any searches yet. Use the "Save this search" button on the gallery page.</p>
+        <p>No saved searches yet.</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {searches.map(search => (
             <li key={search.id} style={{ marginBottom: '0.5rem', padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>
-              <Link href={`/?search=${encodeURIComponent(search.query)}`} style={{ fontWeight: 'bold' }}>
+              <Link href={`/?tag=${encodeURIComponent(search.query)}`} style={{ fontWeight: 'bold' }}>
                 {search.name}
               </Link>
               <span style={{ marginLeft: '1rem', fontSize: '0.8rem', color: '#888' }}>({search.query})</span>

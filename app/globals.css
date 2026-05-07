@@ -52,14 +52,15 @@ body {
 }
 
 .logo {
-  font-family: 'Playwrite DE SAS', cursive;
-  font-size: 2rem;
-  font-weight: 400;
-  background: linear-gradient(135deg, #fff, #9dc8ff);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Убираем все прежние стили, связанные с текстом (background-clip, gradient и т.д.) */
+}
+.logo img {
+  max-height: 40px;
+  width: auto;
+  display: block;
 }
 
 /* Базовые кнопки */

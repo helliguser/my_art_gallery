@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Logo from '@/components/Logo';
 import UserMenu from '@/components/UserMenu';
 import Avatar from '@/components/Avatar';
 import InfiniteScroll from '@/components/InfiniteScroll';
@@ -97,7 +98,7 @@ export default function HomePage() {
   return (
     <div className="glass-container">
       <header className="glass-header">
-        <h1 className="logo">Furline</h1>
+        <Logo />
         <div className="navbar-actions">
           <Link href="/upload" className="glass-small-btn">
             <Icon name="Download" folder="interface" size={14} /> Upload
