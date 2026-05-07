@@ -4,15 +4,20 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Avatar from '@/components/Avatar';
+import UserMenu from '@/components/UserMenu';
+import Icon from '@/components/Icon';
 
 export default function UploadPage() {
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
-  const [tags, setTags] = useState('');
+  const [sourceUrl, setSourceUrl] = useState('');
+  const [artistName, setArtistName] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [tagSuggestions, setTagSuggestions] = useState<{ id: number; name: string }[]>([]);
   const [rating, setRating] = useState('safe');
+  const [description, setDescription] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [imageUrl, setImageUrl] = useState('');
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -25,6 +30,43 @@ export default function UploadPage() {
       setLoading(false);
     });
   }, [router]);
+
+  // Автодополнение тегов
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!tagInput.trim()) {
+        setTagSuggestions([]);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('tags')
+        .select('id, name')
+        .ilike('name', `%${tagInput}%`)
+        .limit(10);
+      if (!error && data) setTagSuggestions(data);
+      else setTagSuggestions([]);
+    };
+    const delay = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(delay);
+  }, [tagInput]);
+
+  const addTag = (tagName: string) => {
+    const normalized = tagName.trim().toLowerCase();
+    if (normalized && !tags.includes(normalized)) {
+      setTags([...tags, normalized]);
+      setTagInput('');
+      setTagSuggestions([]);
+    }
+  };
+
+  const removeTag = (tag: string) => setTags(tags.filter(t => t !== tag));
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(tagInput);
+    }
+  };
 
   const handleUpload = async () => {
     if (!file || !user) return;
@@ -45,7 +87,15 @@ export default function UploadPage() {
 
     const { data: post, error: insertError } = await supabase
       .from('posts')
-      .insert({ title, image_url: publicUrl, user_id: user.id, rating })
+      .insert({
+        title,
+        image_url: publicUrl,
+        user_id: user.id,
+        rating,
+        source_url: sourceUrl.trim() || null,
+        artist_name: artistName.trim() || null,
+        description: description.trim() || null,
+      })
       .select()
       .single();
 
@@ -55,39 +105,38 @@ export default function UploadPage() {
       return;
     }
 
-    // Обработка тегов (упрощённо)
-    if (tags.trim()) {
-      const tagList = tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
-      for (const tagName of tagList) {
-        let tagId = null;
-        const { data: existing } = await supabase
+    for (const tagName of tags) {
+      let tagId = null;
+      const { data: existing } = await supabase
+        .from('tags')
+        .select('id')
+        .eq('name', tagName)
+        .maybeSingle();
+      if (existing) {
+        tagId = existing.id;
+      } else {
+        const { data: newTag, error: createError } = await supabase
           .from('tags')
-          .select('id')
-          .eq('name', tagName)
-          .maybeSingle();
-        if (existing) {
-          tagId = existing.id;
-        } else {
-          const { data: newTag, error: createError } = await supabase
-            .from('tags')
-            .insert({ name: tagName })
-            .select()
-            .single();
-          if (!createError) tagId = newTag.id;
-        }
-        if (tagId) {
-          await supabase.from('post_tags').insert({ post_id: post.id, tag_id: tagId });
-        }
+          .insert({ name: tagName })
+          .select()
+          .single();
+        if (!createError) tagId = newTag.id;
+      }
+      if (tagId) {
+        await supabase.from('post_tags').insert({ post_id: post.id, tag_id: tagId });
       }
     }
 
-    setImageUrl(publicUrl);
     setUploading(false);
     alert('Artwork published!');
     setTitle('');
     setFile(null);
-    setTags('');
+    setSourceUrl('');
+    setArtistName('');
+    setTags([]);
+    setTagInput('');
     setRating('safe');
+    setDescription('');
     if (fileInputRef.current) fileInputRef.current.value = '';
     router.push('/');
   };
@@ -97,32 +146,71 @@ export default function UploadPage() {
 
   return (
     <div className="container">
-      <h1>Upload New Artwork</h1>
-      <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Title</label>
-          <input type="text" value={title} onChange={e => setTitle(e.target.value)} style={{ width: '100%', padding: '0.5rem' }} />
+      <header className="header">
+        <h1 className="logo">Furline</h1>
+        <UserMenu />
+      </header>
+      <div className="upload-wrapper">
+        <div className="upload-card">
+          <h2 className="upload-title">Upload New Artwork</h2>
+          <form onSubmit={(e) => { e.preventDefault(); handleUpload(); }} className="upload-form">
+            <div className="upload-group">
+              <label><Icon name="Download" folder="interface" size={16} /> File *</label>
+              <div className="file-drop-zone">
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
+                <p className="file-hint">JPG, PNG, GIF, WebP (max 20MB)</p>
+              </div>
+            </div>
+            <div className="upload-group">
+              <label>Title *</label>
+              <input type="text" value={title} onChange={e => setTitle(e.target.value)} required />
+            </div>
+            <div className="upload-group">
+              <label><Icon name="Link_Horizontal" folder="interface" size={16} /> Source URL</label>
+              <input type="url" value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} placeholder="https://..." />
+            </div>
+            <div className="upload-group">
+              <label><Icon name="User" folder="interface" size={16} /> Artist</label>
+              <input type="text" value={artistName} onChange={e => setArtistName(e.target.value)} placeholder="Artist name (if not you)" />
+            </div>
+            <div className="upload-group">
+              <label><Icon name="Tag" folder="interface" size={16} /> Tags *</label>
+              <div className="tags-input-wrapper">
+                <div className="tags-list">
+                  {tags.map(tag => (
+                    <span key={tag} className="tag-chip">
+                      {tag}
+                      <button type="button" onClick={() => removeTag(tag)}>×</button>
+                    </span>
+                  ))}
+                  <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="e.g. cat, digital, portrait" />
+                </div>
+                {tagSuggestions.length > 0 && (
+                  <div className="tag-suggestions">
+                    {tagSuggestions.map(sug => (
+                      <button key={sug.id} type="button" onClick={() => addTag(sug.name)}>{sug.name}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="upload-group">
+              <label><Icon name="Star" folder="interface" size={16} /> Rating</label>
+              <div className="rating-group">
+                {['safe', 'questionable', 'explicit'].map(r => (
+                  <label key={r} className={`rating-chip ${rating === r ? 'active' : ''}`}>
+                    <input type="radio" name="rating" value={r} checked={rating === r} onChange={() => setRating(r)} /> {r.charAt(0).toUpperCase() + r.slice(1)}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="upload-group">
+              <label><Icon name="Book_Open" folder="interface" size={16} /> Description</label>
+              <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder="Tell something about this artwork..." />
+            </div>
+            <button type="submit" disabled={uploading || !title || !file} className="upload-button">{uploading ? 'Uploading...' : 'Publish Artwork'}</button>
+          </form>
         </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Tags (comma separated)</label>
-          <input type="text" value={tags} onChange={e => setTags(e.target.value)} placeholder="e.g. cat, digital" style={{ width: '100%', padding: '0.5rem' }} />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Rating</label>
-          <select value={rating} onChange={e => setRating(e.target.value)} style={{ width: '100%', padding: '0.5rem' }}>
-            <option value="safe">Safe</option>
-            <option value="questionable">Questionable</option>
-            <option value="explicit">Explicit</option>
-          </select>
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Image file</label>
-          <input type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} ref={fileInputRef} />
-        </div>
-        <button onClick={handleUpload} disabled={uploading || !title || !file} className="btn btn-primary">
-          {uploading ? 'Uploading...' : 'Publish'}
-        </button>
-        {imageUrl && <div><p>Preview:</p><img src={imageUrl} alt="preview" style={{ maxWidth: '100%', borderRadius: '8px' }} /></div>}
       </div>
     </div>
   );
