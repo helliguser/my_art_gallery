@@ -31,6 +31,15 @@ export default async function FavoritesPage() {
     .in('id', postIds)
     .order('created_at', { ascending: false });
 
+  if (!posts || posts.length === 0) {
+    return (
+      <div className="container">
+        <h1>My Favorites</h1>
+        <p>No favorites yet.</p>
+      </div>
+    );
+  }
+
   // 3. Получаем профили авторов отдельно
   const userIds = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
   let profilesMap: Record<string, any> = {};
@@ -52,28 +61,24 @@ export default async function FavoritesPage() {
   return (
     <div className="container">
       <h1>My Favorites</h1>
-      {enrichedPosts.length === 0 ? (
-        <p>No favorites yet.</p>
-      ) : (
-        <div className="gallery">
-          {enrichedPosts.map(post => (
-            <div key={post.id} className="card">
-              <Link href={`/post/${post.id}`}>
-                <img src={post.image_url} alt={post.title} />
-              </Link>
-              <div className="card-content">
-                <div className="card-title">{post.title}</div>
-                <div className="card-author">
-                  <Avatar url={post.profile?.avatar_url} size={24} />
-                  <Link href={`/user/${post.user_id}`}>
-                    {post.profile?.full_name || post.profile?.username || 'Anonymous'}
-                  </Link>
-                </div>
+      <div className="gallery">
+        {enrichedPosts.map(post => (
+          <div key={post.id} className="card">
+            <Link href={`/post/${post.id}`}>
+              <img src={post.image_url} alt={post.title} />
+            </Link>
+            <div className="card-content">
+              <div className="card-title">{post.title}</div>
+              <div className="card-author">
+                <Avatar url={post.profile?.avatar_url} size={24} />
+                <Link href={`/user/${post.user_id}`}>
+                  {post.profile?.full_name || post.profile?.username || 'Anonymous'}
+                </Link>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
