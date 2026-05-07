@@ -1,3 +1,4 @@
+// components/UserMenu.tsx (исправленный)
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -92,8 +93,8 @@ export default function UserMenu() {
   const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
 
   return (
-    <div className="user-menu" ref={dropdownRef} style={{ position: 'relative' }}>
-      <div className="user-dropdown-trigger" onClick={() => setIsOpen(!isOpen)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.2rem 0.5rem', borderRadius: '40px', background: 'rgba(255,255,255,0.05)' }}>
+    <div className="user-menu" ref={dropdownRef}>
+      <div className="user-dropdown-trigger" onClick={() => setIsOpen(!isOpen)}>
         <Avatar url={avatarUrl} size={32} name={displayName} />
         <span className="user-greeting">{displayName}</span>
         <Icon name="Caret_Down_SM" folder="arrow" size={12} />
@@ -122,12 +123,12 @@ export default function UserMenu() {
             <Icon name="Download" folder="interface" size={16} /> Upload
           </Link>
           <div className="dropdown-divider"></div>
-          <button onClick={handleLogout} className="dropdown-item" style={{ color: '#f44336' }}>
+          <button onClick={handleLogout} className="dropdown-item logout">
             <Icon name="Log_Out" folder="interface" size={16} /> Logout
           </button>
         </div>
       )}
-      <div className="user-menu-icons" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem' }}>
+      <div className="user-menu-icons">
         <NotificationBell />
         <ThemeSwitcher />
       </div>

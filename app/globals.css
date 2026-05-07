@@ -269,78 +269,114 @@ textarea {
   transform: scale(1.05);
 }
 
-/* ========================================== */
-/* НОВЫЕ СТИЛИ ДЛЯ ВЫПАДАЮЩЕГО МЕНЮ И УВЕДОМЛЕНИЙ */
-/* ========================================== */
-
+/* ========== УЛУЧШЕННЫЙ DROPDOWN С ВЫСОКИМ Z-INDEX ========== */
 .user-menu {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
   position: relative;
+  isolation: isolate;
+  z-index: 200;
 }
 
-.user-dropdown-trigger {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 32px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  transition: background 0.2s;
-}
-.user-dropdown-trigger:hover {
-  background: var(--btn-outline-hover);
-}
-.dropdown-arrow {
-  font-size: 0.7rem;
-  color: var(--text);
-}
 .user-dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 200px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
+  min-width: 220px;
+  background: rgba(20, 22, 30, 0.85);
+  backdrop-filter: blur(20px);
   border-radius: 20px;
-  backdrop-filter: blur(8px);
-  background: rgba(var(--card-bg-rgb), 0.95);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.4),
+              0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  padding: 0.5rem 0;
   z-index: 1000;
-  overflow: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform-origin: top right;
 }
-.dropdown-item {
-  display: block;
-  padding: 0.75rem 1.2rem;
+
+.user-dropdown-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  transition: background 0.15s ease, transform 0.1s ease;
   text-decoration: none;
-  color: var(--text);
-  transition: background 0.1s;
-  cursor: pointer;
-  background: none;
+  background: transparent;
   border: none;
   width: 100%;
   text-align: left;
-  font-size: 0.9rem;
-  font-weight: 500;
+  cursor: pointer;
 }
-.dropdown-item:hover {
-  background: var(--btn-outline-hover);
+
+.user-dropdown-menu .dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  transform: translateX(2px);
 }
-.dropdown-divider {
-  height: 1px;
-  background: var(--border);
+
+.user-dropdown-menu .dropdown-divider {
   margin: 0.25rem 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
 }
-.logout {
-  color: #f44336;
+
+.user-dropdown-menu .logout {
+  color: #ff7b72;
 }
-.user-menu-icons {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+
+.user-dropdown-menu .logout:hover {
+  background: rgba(255, 80, 80, 0.2);
+  color: #ff9e8f;
+}
+
+/* Улучшение иконок в dropdown (если они загружаются через Icon) */
+.user-dropdown-menu .dropdown-item svg,
+.user-dropdown-menu .dropdown-item img {
+  width: 18px;
+  height: 18px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.user-dropdown-menu .dropdown-item:hover svg,
+.user-dropdown-menu .dropdown-item:hover img {
+  opacity: 1;
+}
+
+/* Повышаем контраст текста и делаем фон тёмным для светлой темы */
+[data-theme="light"] .user-dropdown-menu {
+  background: rgba(245, 245, 250, 0.9);
+  backdrop-filter: blur(20px);
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.2);
+}
+[data-theme="light"] .user-dropdown-menu .dropdown-item {
+  color: #111;
+}
+[data-theme="light"] .user-dropdown-menu .dropdown-item:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .user-dropdown-menu .dropdown-divider {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Гарантируем, что search bar не перекрывает dropdown */
+.glass-search-wrapper {
+  position: relative;
+  z-index: 10;
+}
+
+/* Увеличим z-index хедера, но dropdown должен быть над ним */
+.glass-header {
+  position: relative;
+  z-index: 150;
+}
+
+/* Если нужно – для глобального контекста наложения */
+body {
+  isolation: isolate;
 }
 
 /* Уведомления */
