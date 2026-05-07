@@ -41,7 +41,7 @@ export default function LikedPage() {
     <div className="container">
       <h1>Liked Artworks</h1>
       {posts.length === 0 ? (
-        <p>You haven't liked any posts yet.</p>
+        <p>No liked posts yet.</p>
       ) : (
         <div className="gallery">
           {posts.map(post => (

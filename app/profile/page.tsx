@@ -4,10 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Logo from '@/components/Logo';
-import UserMenu from '@/components/UserMenu';
 import Avatar from '@/components/Avatar';
-import Icon from '@/components/Icon';
 
 type Profile = {
   id: string;
@@ -22,7 +19,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ full_name: '', bio: '' });
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -71,70 +67,22 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !profile) return;
-    setUploadingAvatar(true);
-    const fileName = `${profile.id}_${Date.now()}`;
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(fileName, file);
-    if (uploadError) {
-      alert('Upload error: ' + uploadError.message);
-      setUploadingAvatar(false);
-      return;
-    }
-    const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(fileName);
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ avatar_url: publicUrl })
-      .eq('id', profile.id);
-    if (updateError) alert('Error: ' + updateError.message);
-    else {
-      setProfile({ ...profile, avatar_url: publicUrl });
-    }
-    setUploadingAvatar(false);
-  };
-
   if (loading) return <div className="container">Loading profile...</div>;
   if (!profile) return <div className="container">Profile not found</div>;
 
   if (editing) {
     return (
       <div className="container">
-        <header className="header">
-          <Logo />
-          <UserMenu />
-        </header>
+        <Link href="/" className="btn btn-outline">← Back</Link>
         <h1>Edit Profile</h1>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Avatar</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
-            <Avatar url={profile.avatar_url} size={80} />
-            <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
-            {uploadingAvatar && <span>Uploading...</span>}
-          </div>
-        </div>
         <div><label>Username: {profile.username}</label></div>
         <div style={{ marginTop: '1rem' }}>
           <label>Full Name</label>
-          <input
-            type="text"
-            value={form.full_name}
-            onChange={e => setForm({ ...form, full_name: e.target.value })}
-            style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
-          />
+          <input type="text" value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }} />
         </div>
         <div>
           <label>Bio</label>
-          <textarea
-            value={form.bio}
-            onChange={e => setForm({ ...form, bio: e.target.value })}
-            rows={4}
-            style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
-          />
+          <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} rows={4} style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }} />
         </div>
         <button onClick={handleSave} className="btn btn-primary">Save</button>
         <button onClick={() => setEditing(false)} className="btn btn-outline" style={{ marginLeft: '1rem' }}>Cancel</button>
@@ -144,12 +92,9 @@ export default function ProfilePage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <Logo />
-        <UserMenu />
-      </header>
+      <Link href="/" className="btn btn-outline">← Back to Gallery</Link>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-        <Avatar url={profile.avatar_url} size={100} />
+        <Avatar url={profile.avatar_url} size={80} />
         <div>
           <h1>{profile.full_name || profile.username}</h1>
           <p>@{profile.username}</p>

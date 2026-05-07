@@ -1,8 +1,6 @@
 import { createClient } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import Logo from '@/components/Logo';
-import UserMenu from '@/components/UserMenu';
 
 export default async function SavedSearchesPage() {
   const supabase = await createClient();
@@ -19,10 +17,6 @@ export default async function SavedSearchesPage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <Logo />
-        <UserMenu />
-      </header>
       <h1>Saved Searches</h1>
       {searches.length === 0 ? (
         <p>No saved searches yet.</p>

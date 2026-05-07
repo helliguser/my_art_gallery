@@ -6,34 +6,33 @@ import FollowButton from '@/components/FollowButton';
 
 export default async function UserPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  console.log('[UserPage] ID:', id);
   const supabase = await createClient();
 
-  // Profil abrufen
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', id)
     .single();
+  if (profileError || !profile) notFound();
 
-  if (profileError || !profile) {
-    console.error('[UserPage] Profile error:', profileError);
-    notFound();
-  }
-
-  // Posts
   const { data: posts } = await supabase
     .from('posts')
-    .select('id, title, image_url, likes_count')
+    .select('id, title, image_url, created_at, likes_count')
     .eq('user_id', id)
     .order('created_at', { ascending: false });
 
-  // Current session
   const { data: { session } } = await supabase.auth.getSession();
   const currentUserId = session?.user?.id;
   const isOwnProfile = currentUserId === id;
 
-  console.log('[UserPage] currentUserId:', currentUserId, 'isOwnProfile:', isOwnProfile);
+  const { count: followersCount } = await supabase
+    .from('follows')
+    .select('id', { count: 'exact', head: true })
+    .eq('following_id', id);
+  const { count: followingCount } = await supabase
+    .from('follows')
+    .select('id', { count: 'exact', head: true })
+    .eq('follower_id', id);
 
   const authorName = profile.full_name || profile.username || 'Anonymous';
 
@@ -45,23 +44,18 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
         <div>
           <h1>{authorName}</h1>
           <p>@{profile.username}</p>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+            <span><strong>{followersCount || 0}</strong> followers</span>
+            <span><strong>{followingCount || 0}</strong> following</span>
+          </div>
         </div>
       </div>
 
-      {!isOwnProfile && currentUserId && (
-        <div style={{ marginBottom: '1rem' }}>
-          <FollowButton userId={id} />
-        </div>
-      )}
-      {!currentUserId && (
-        <div style={{ marginBottom: '1rem' }}>
-          <Link href="/login">Sign in to follow</Link>
-        </div>
-      )}
+      {!isOwnProfile && currentUserId && <FollowButton userId={id} />}
+      {!currentUserId && <Link href="/login" className="btn btn-primary">Sign in to follow</Link>}
 
-      {profile.bio && <p>{profile.bio}</p>}
-
-      <h2>Artworks ({posts?.length || 0})</h2>
+      {profile.bio && <p style={{ marginTop: '1rem' }}>{profile.bio}</p>}
+      <h2 style={{ marginTop: '2rem' }}>Artworks ({posts?.length || 0})</h2>
       <div className="gallery">
         {posts?.map(post => (
           <div key={post.id} className="card">
