@@ -31,7 +31,6 @@ export default function UploadPage() {
     });
   }, [router]);
 
-  // Автодополнение тегов
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (!tagInput.trim()) {
