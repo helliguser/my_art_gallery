@@ -2,46 +2,30 @@ import { createClient } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
-import Logo from '@/components/Logo';
-import UserMenu from '@/components/UserMenu';
 
 export default async function FavoritesPage() {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
-
   if (!session) redirect('/login?redirect_to=/favorites');
 
-  // Получаем избранные ID постов
-  const { data: favorites, error: favError } = await supabase
+  const { data: favorites } = await supabase
     .from('favorites')
     .select('post_id')
     .eq('user_id', session.user.id);
-
-  if (favError) {
-    console.error(favError);
-    return <div className="container">Error loading favorites</div>;
-  }
-
   const postIds = favorites?.map(f => f.post_id) || [];
   let posts: any[] = [];
   if (postIds.length) {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('posts')
       .select('*, profiles(full_name, username, avatar_url)')
       .in('id', postIds)
       .order('created_at', { ascending: false });
-    if (error) console.error(error);
-    else posts = data || [];
+    posts = data || [];
   }
-
-  const enriched = posts.map(post => ({ ...post, profile: post.profiles }));
+  const enriched = posts.map(p => ({ ...p, profile: p.profiles }));
 
   return (
     <div className="container">
-      <header className="header">
-        <Logo />
-        <UserMenu />
-      </header>
       <h1>My Favorites</h1>
       {enriched.length === 0 ? (
         <p>No favorites yet.</p>

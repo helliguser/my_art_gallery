@@ -1,11 +1,9 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase-server';
 import Link from 'next/link';
-import Logo from '@/components/Logo';
-import UserMenu from '@/components/UserMenu';
 import Avatar from '@/components/Avatar';
-import InfiniteScroll from '@/components/InfiniteScroll';
+import LikeButton from '@/components/LikeButton';
+
+export const dynamic = 'force-dynamic';
 
 type Post = {
   id: number;
@@ -21,52 +19,44 @@ type Post = {
   } | null;
 };
 
-export default function TrendingPage() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
+export default async function TrendingPage() {
+  const supabase = await createClient();
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const fetchTrending = async (pageNum: number) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/trending?page=${pageNum}&limit=12`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setPosts(prev => (pageNum === 1 ? data.posts : [...prev, ...data.posts]));
-      setHasMore(pageNum < data.totalPages);
-    } catch (err) {
-      console.error(err);
-    }
-    setLoading(false);
-  };
+  const { data: posts, error } = await supabase
+    .from('posts')
+    .select('*, likes_count, views')
+    .gte('created_at', sevenDaysAgo.toISOString())
+    .order('likes_count', { ascending: false })
+    .order('views', { ascending: false });
 
-  useEffect(() => {
-    fetchTrending(1).finally(() => setInitialLoading(false));
-  }, []);
+  if (error) return <div className="container">Error loading trending posts</div>;
 
-  const loadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchTrending(nextPage);
-  };
+  const userIds = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
+  let profilesMap: Record<string, any> = {};
+  if (userIds.length) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, username, avatar_url')
+      .in('id', userIds);
+    if (profiles) profilesMap = Object.fromEntries(profiles.map(p => [p.id, p]));
+  }
 
-  if (initialLoading) return <div className="container">Loading trending...</div>;
+  const enriched = posts.map(post => ({
+    ...post,
+    profile: profilesMap[post.user_id] || null,
+  }));
 
   return (
     <div className="container">
-      <header className="header">
-        <Logo />
-        <UserMenu />
-      </header>
-      <h1 className="logo" style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>🔥 Trending This Week</h1>
-      <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
-        {posts.length === 0 && !loading && <p>No trending posts at the moment.</p>}
+      <h1 className="page-title">🔥 Trending This Week</h1>
+      {enriched.length === 0 ? (
+        <p>No trending posts at the moment.</p>
+      ) : (
         <div className="gallery">
-          {posts.map(post => {
+          {enriched.map(post => {
             const authorName = post.profile?.full_name || post.profile?.username || 'Anonymous';
-            const popularity = (post.likes_count || 0) + (post.views || 0);
             return (
               <div key={post.id} className="card">
                 <Link href={`/post/${post.id}`}>
@@ -75,18 +65,19 @@ export default function TrendingPage() {
                 <div className="card-content">
                   <div className="card-title">{post.title}</div>
                   <div className="card-author">
-                    <Avatar url={post.profile?.avatar_url} size={24} />
+                    <Avatar url={post.profile?.avatar_url} size={24} name={authorName} />
                     <Link href={`/user/${post.user_id}`}>{authorName}</Link>
                   </div>
                   <div className="card-actions">
-                    <span>🔥 {popularity}</span>
+                    <span>🔥 { (post.likes_count || 0) + (post.views || 0) }</span>
+                    <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
-      </InfiniteScroll>
+      )}
     </div>
   );
 }

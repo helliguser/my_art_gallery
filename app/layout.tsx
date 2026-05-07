@@ -1,9 +1,9 @@
-// app/layout.tsx
 import { Suspense } from 'react';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Animations from '@/components/Animations';
 import PageLoader from '@/components/PageLoader';
+import GlobalHeader from '@/components/GlobalHeader';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -26,8 +26,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        {/* Оборачиваем всё приложение в Suspense */}
-        <Suspense>
+        <Suspense fallback={null}>
+          <GlobalHeader />
           {children}
           <Animations />
           <PageLoader />

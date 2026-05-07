@@ -4,20 +4,9 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
-import Logo from '@/components/Logo';
-import UserMenu from '@/components/UserMenu';
-
-type LikedPost = {
-  id: number;
-  title: string;
-  image_url: string;
-  user_id: string;
-  likes_count: number;
-  profile: { full_name: string | null; username: string | null; avatar_url: string | null } | null;
-};
 
 export default function LikedPage() {
-  const [posts, setPosts] = useState<LikedPost[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,7 +19,7 @@ export default function LikedPage() {
         .from('likes')
         .select('post_id')
         .eq('user_id', session.user.id);
-      if (!likes || likes.length === 0) {
+      if (!likes?.length) {
         setLoading(false);
         return;
       }
@@ -50,13 +39,9 @@ export default function LikedPage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <Logo />
-        <UserMenu />
-      </header>
       <h1>Liked Artworks</h1>
       {posts.length === 0 ? (
-        <p>You haven't liked any posts yet.</p>
+        <p>No liked posts yet.</p>
       ) : (
         <div className="gallery">
           {posts.map(post => (

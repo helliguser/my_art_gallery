@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Logo from '@/components/Logo';
-import UserMenu from '@/components/UserMenu';
 import Avatar from '@/components/Avatar';
 import InfiniteScroll from '@/components/InfiniteScroll';
 import { useDebounce } from 'use-debounce';
@@ -97,19 +95,6 @@ export default function HomePage() {
 
   return (
     <div className="glass-container">
-      <header className="glass-header">
-        <Logo />
-        <div className="navbar-actions">
-          <Link href="/upload" className="glass-small-btn">
-            <Icon name="Download" folder="interface" size={14} /> Upload
-          </Link>
-          <Link href="/trending" className="glass-small-btn">
-            <Icon name="Trending_Up" folder="interface" size={14} /> Trending
-          </Link>
-        </div>
-        <UserMenu />
-      </header>
-
       <div className="glass-filters">
         <div className="filter-buttons">
           <button onClick={() => setFeedType('all')} className={`glass-btn ${feedType === 'all' ? 'active' : ''}`}>All</button>
