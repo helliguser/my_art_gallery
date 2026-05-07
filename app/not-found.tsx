@@ -1,5 +1,7 @@
+// app/not-found.tsx
 import Link from 'next/link';
 
+// !!! ВАЖНО: Этот код намеренно прост, чтобы избежать любых клиентских хуков
 export default function NotFound() {
   return (
     <div className="container" style={{ textAlign: 'center', padding: '4rem 1rem' }}>
