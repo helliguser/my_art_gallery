@@ -6,8 +6,8 @@ import PageLoader from '@/components/PageLoader';
 
 const inter = Inter({
   subsets: ['latin'],
-  display: 'swap',
   variable: '--font-inter',
+  display: 'swap',
 });
 
 export const metadata = {
