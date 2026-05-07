@@ -11,22 +11,27 @@ export default async function FavoritesPage() {
 
   if (!session) redirect('/login?redirect_to=/favorites');
 
-  const { data: favorites, error } = await supabase
+  // Получаем избранные ID постов
+  const { data: favorites, error: favError } = await supabase
     .from('favorites')
     .select('post_id')
     .eq('user_id', session.user.id);
 
-  if (error) return <div className="container">Error loading favorites</div>;
+  if (favError) {
+    console.error(favError);
+    return <div className="container">Error loading favorites</div>;
+  }
 
   const postIds = favorites?.map(f => f.post_id) || [];
   let posts: any[] = [];
   if (postIds.length) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('posts')
       .select('*, profiles(full_name, username, avatar_url)')
       .in('id', postIds)
       .order('created_at', { ascending: false });
-    posts = data || [];
+    if (error) console.error(error);
+    else posts = data || [];
   }
 
   const enriched = posts.map(post => ({ ...post, profile: post.profiles }));
