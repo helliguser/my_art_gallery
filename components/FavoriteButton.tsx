@@ -58,6 +58,7 @@ export default function FavoriteButton({ postId }: { postId: number }) {
       ref={buttonRef}
       onClick={handleToggle}
       disabled={loading}
+      className="favorite-button"
       style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
     >
       <StarIcon filled={isFavorited} size={18} />

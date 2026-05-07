@@ -68,7 +68,7 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
     >
       <LikeIcon filled={userLiked} size={18} />
-      <span>{likes}</span>
+      <span style={{ color: '#ffffff', fontWeight: 500 }}>{likes}</span>
     </button>
   );
 }

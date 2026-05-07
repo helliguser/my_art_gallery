@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Avatar from '@/components/Avatar';
 import InfiniteScroll from '@/components/InfiniteScroll';
 import { useDebounce } from 'use-debounce';
 import { supabase } from '@/lib/supabase';
 import SaveSearchButton from '@/components/SaveSearchButton';
 import LikeButton from '@/components/LikeButton';
+import FavoriteButton from '@/components/FavoriteButton';
 import Icon from '@/components/Icon';
 
 type Post = {
@@ -55,14 +55,19 @@ export default function HomePage() {
         const name = (item as any).tags.name;
         counts[name] = (counts[name] || 0) + 1;
       }
-      const popular = Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10);
+      const popular = Object.entries(counts)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
       setPopularTags(popular);
     };
     fetchPopularTags();
   }, []);
 
   useEffect(() => {
-    setPosts([]); setPage(1); setHasMore(true);
+    setPosts([]);
+    setPage(1);
+    setHasMore(true);
     fetchPosts(1, debouncedSearch, debouncedTag, feedType);
   }, [debouncedSearch, debouncedTag, feedType]);
 
@@ -77,7 +82,9 @@ export default function HomePage() {
       if (data.error) throw new Error(data.error);
       setPosts(prev => (pageNum === 1 ? data.posts : [...prev, ...data.posts]));
       setHasMore(pageNum < data.totalPages);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
     setLoading(false);
   };
 
@@ -98,7 +105,9 @@ export default function HomePage() {
       <div className="glass-filters">
         <div className="filter-buttons">
           <button onClick={() => setFeedType('all')} className={`glass-btn ${feedType === 'all' ? 'active' : ''}`}>All</button>
-          {isLoggedIn && <button onClick={() => setFeedType('following')} className={`glass-btn ${feedType === 'following' ? 'active' : ''}`}>Following</button>}
+          {isLoggedIn && (
+            <button onClick={() => setFeedType('following')} className={`glass-btn ${feedType === 'following' ? 'active' : ''}`}>Following</button>
+          )}
         </div>
       </div>
 
@@ -137,26 +146,19 @@ export default function HomePage() {
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
         {posts.length === 0 && !loading && <p className="glass-empty">No artworks found.</p>}
         <div className="glass-gallery">
-          {posts.map(post => {
-            const authorName = post.profile?.full_name || post.profile?.username || 'Anonymous';
-            return (
-              <div key={post.id} className="glass-card">
-                <Link href={`/post/${post.id}`}>
-                  <img src={post.image_url} alt={post.title} className="glass-card-img" />
-                </Link>
-                <div className="glass-card-content">
-                  <div className="glass-card-title">{post.title || 'Untitled'}</div>
-                  <div className="glass-card-author">
-                    <Avatar url={post.profile?.avatar_url} size={24} name={authorName} />
-                    <Link href={`/user/${post.user_id}`}>{authorName}</Link>
-                  </div>
-                  <div className="glass-card-actions">
-                    <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
-                  </div>
+          {posts.map(post => (
+            <div key={post.id} className="glass-card">
+              <Link href={`/post/${post.id}`}>
+                <img src={post.image_url} alt={post.title} className="glass-card-img" />
+              </Link>
+              <div className="glass-card-content">
+                <div className="glass-card-actions">
+                  <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
+                  <FavoriteButton postId={post.id} />
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </InfiniteScroll>
     </div>
