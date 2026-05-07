@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import SaveSearchButton from '@/components/SaveSearchButton';
 import LikeButton from '@/components/LikeButton';
 import Icon from '@/components/Icon';
+import FavoriteButton from '@/components/FavoriteButton';
 
 type Post = {
   id: number;
@@ -105,21 +106,11 @@ export default function HomePage() {
       <div className="glass-search-wrapper">
         <div className="glass-search-field">
           <Icon name="Search_Magnifying_Glass" folder="interface" size={18} />
-          <input
-            type="text"
-            placeholder="Search by title..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <input type="text" placeholder="Search by title..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
         <div className="glass-search-field">
           <Icon name="Tag" folder="interface" size={18} />
-          <input
-            type="text"
-            placeholder="Search by tag (e.g. cat -dog)..."
-            value={tagTerm}
-            onChange={(e) => setTagTerm(e.target.value)}
-          />
+          <input type="text" placeholder="Search by tag (e.g. cat -dog)..." value={tagTerm} onChange={(e) => setTagTerm(e.target.value)} />
         </div>
         <SaveSearchButton currentSearch={tagTerm} />
       </div>
@@ -151,6 +142,7 @@ export default function HomePage() {
                     <Link href={`/user/${post.user_id}`}>{authorName}</Link>
                   </div>
                   <div className="glass-card-actions">
+                    <FavoriteButton postId={post.id} />
                     <LikeButton postId={post.id} initialLikes={post.likes_count || 0} />
                   </div>
                 </div>
