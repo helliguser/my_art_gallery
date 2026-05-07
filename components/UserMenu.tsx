@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Avatar from './Avatar';
-import ThemeSwitcher from './ThemeSwitcher';
 import NotificationBell from './NotificationBell';
 import { animate } from 'animejs';
 import Icon from './Icon';
@@ -57,14 +56,14 @@ export default function UserMenu() {
         animate(menuRef.current, {
           translateY: [-8, 0],
           opacity: [0, 1],
-          duration: 180,
+          duration: 200,
           easing: 'easeOutQuad',
         });
       } else {
         animate(menuRef.current, {
           translateY: [0, -8],
           opacity: [1, 0],
-          duration: 140,
+          duration: 150,
           easing: 'easeOutQuad',
         });
       }
@@ -77,14 +76,12 @@ export default function UserMenu() {
     setIsOpen(false);
   };
 
-  if (loading) return <div className="user-menu-placeholder">...</div>;
+  if (loading) return <div>...</div>;
   if (!user) {
     return (
       <div className="user-menu">
-        <Link href="/about" className="glass-small-btn">About</Link>
-        <ThemeSwitcher />
-        <Link href="/login" className="glass-btn" style={{ background: '#4f9cff', color: 'white' }}>Sign In</Link>
-        <Link href="/register" className="glass-btn">Sign Up</Link>
+        <Link href="/login" className="btn btn-primary">Sign In</Link>
+        <Link href="/register" className="btn btn-outline">Sign Up</Link>
       </div>
     );
   }
@@ -129,7 +126,6 @@ export default function UserMenu() {
       )}
       <div className="user-menu-icons">
         <NotificationBell />
-        <ThemeSwitcher />
       </div>
     </div>
   );
