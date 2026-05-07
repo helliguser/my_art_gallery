@@ -3,8 +3,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import UserMenu from '@/components/UserMenu';
 import Icon from '@/components/Icon';
 
 export default function UploadPage() {
@@ -37,13 +35,12 @@ export default function UploadPage() {
         setTagSuggestions([]);
         return;
       }
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('tags')
         .select('id, name')
         .ilike('name', `%${tagInput}%`)
         .limit(10);
-      if (!error && data) setTagSuggestions(data);
-      else setTagSuggestions([]);
+      setTagSuggestions(data || []);
     };
     const delay = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(delay);
@@ -145,14 +142,10 @@ export default function UploadPage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <h1 className="logo">Furline</h1>
-        <UserMenu />
-      </header>
       <div className="upload-wrapper">
         <div className="upload-card">
           <h2 className="upload-title">Upload New Artwork</h2>
-          <form onSubmit={(e) => { e.preventDefault(); handleUpload(); }} className="upload-form">
+          <form onSubmit={(e) => { e.preventDefault(); handleUpload(); }}>
             <div className="upload-group">
               <label><Icon name="Download" folder="interface" size={16} /> File *</label>
               <div className="file-drop-zone">
