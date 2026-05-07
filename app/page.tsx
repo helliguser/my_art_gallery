@@ -94,17 +94,17 @@ export default function HomePage() {
 
   if (initialLoading) return null;
 
-  // Определяем, есть ли featured-пост (первый в списке, если он набрал много лайков)
-  const featuredPost = posts.length > 0 && posts[0].likes_count > 10 ? posts[0] : null;
-  const galleryPosts = featuredPost ? posts.slice(1) : posts;
-
   return (
     <div className="glass-container">
       <header className="glass-header">
         <h1 className="logo">Furline</h1>
         <div className="navbar-actions">
-          <Link href="/upload" className="glass-small-btn">📤 Upload</Link>
-          <Link href="/trending" className="glass-small-btn">🔥 Trending</Link>
+          <Link href="/upload" className="glass-small-btn">
+            <Icon name="Download" folder="interface" size={14} /> Upload
+          </Link>
+          <Link href="/trending" className="glass-small-btn">
+            <Icon name="Trending_Up" folder="interface" size={14} /> Trending
+          </Link>
         </div>
         <UserMenu />
       </header>
@@ -149,31 +149,9 @@ export default function HomePage() {
       )}
 
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
-        {galleryPosts.length === 0 && !loading && <p className="glass-empty">No artworks found.</p>}
-        
-        {/* Featured пост (если есть) */}
-        {featuredPost && (
-          <div className="glass-featured">
-            <div className="glass-card featured">
-              <Link href={`/post/${featuredPost.id}`}>
-                <img src={featuredPost.image_url} alt={featuredPost.title} className="glass-card-img" />
-              </Link>
-              <div className="glass-card-content">
-                <div className="glass-card-title">✨ Featured: {featuredPost.title}</div>
-                <div className="glass-card-author">
-                  <Avatar url={featuredPost.profile?.avatar_url} size={24} name={featuredPost.profile?.full_name || 'User'} />
-                  <Link href={`/user/${featuredPost.user_id}`}>{featuredPost.profile?.full_name || featuredPost.profile?.username || 'Anonymous'}</Link>
-                </div>
-                <div className="glass-card-actions">
-                  <LikeButton postId={featuredPost.id} initialLikes={featuredPost.likes_count || 0} />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
+        {posts.length === 0 && !loading && <p className="glass-empty">No artworks found.</p>}
         <div className="glass-gallery">
-          {galleryPosts.map(post => {
+          {posts.map(post => {
             const authorName = post.profile?.full_name || post.profile?.username || 'Anonymous';
             return (
               <div key={post.id} className="glass-card">
@@ -195,18 +173,6 @@ export default function HomePage() {
           })}
         </div>
       </InfiniteScroll>
-
-      <style jsx>{`
-        .glass-featured {
-          margin-bottom: 2rem;
-        }
-        .glass-card.featured {
-          max-width: 500px;
-          margin: 0 auto;
-          border: 2px solid rgba(79, 156, 255, 0.5);
-          box-shadow: 0 0 20px rgba(79, 156, 255, 0.3);
-        }
-      `}</style>
     </div>
   );
 }
