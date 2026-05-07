@@ -1,4 +1,3 @@
-// components/UserMenu.tsx (исправленный)
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -56,16 +55,16 @@ export default function UserMenu() {
     if (menuRef.current) {
       if (isOpen) {
         animate(menuRef.current, {
-          translateY: [-10, 0],
+          translateY: [-8, 0],
           opacity: [0, 1],
-          duration: 200,
+          duration: 180,
           easing: 'easeOutQuad',
         });
       } else {
         animate(menuRef.current, {
-          translateY: [0, -10],
+          translateY: [0, -8],
           opacity: [1, 0],
-          duration: 150,
+          duration: 140,
           easing: 'easeOutQuad',
         });
       }

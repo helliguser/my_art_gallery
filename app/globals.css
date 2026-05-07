@@ -272,8 +272,7 @@ textarea {
 /* ========== УЛУЧШЕННЫЙ DROPDOWN С ВЫСОКИМ Z-INDEX ========== */
 .user-menu {
   position: relative;
-  isolation: isolate;
-  z-index: 200;
+  z-index: 2100;
 }
 
 .user-dropdown-menu {
@@ -281,54 +280,50 @@ textarea {
   top: calc(100% + 8px);
   right: 0;
   min-width: 220px;
-  background: rgba(20, 22, 30, 0.85);
+  background: rgba(25, 25, 35, 0.85);
   backdrop-filter: blur(20px);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.4),
-              0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255,255,255,0.05) inset;
+  z-index: 2000;
+  overflow: hidden;
   padding: 0.5rem 0;
-  z-index: 1000;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  transform-origin: top right;
 }
 
-.user-dropdown-menu .dropdown-item {
+.dropdown-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.7rem 1.2rem;
+  padding: 0.6rem 1.2rem;
   font-size: 0.85rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-  transition: background 0.15s ease, transform 0.1s ease;
-  text-decoration: none;
-  background: transparent;
-  border: none;
-  width: 100%;
-  text-align: left;
+  color: #f0f0f0;
+  transition: background 0.15s, transform 0.05s;
   cursor: pointer;
+  text-decoration: none;
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
 }
 
-.user-dropdown-menu .dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: white;
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.1);
   transform: translateX(2px);
 }
 
-.user-dropdown-menu .dropdown-divider {
-  margin: 0.25rem 0;
+.dropdown-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0.3rem 0;
 }
 
-.user-dropdown-menu .logout {
-  color: #ff7b72;
+.logout {
+  color: #ff8888;
 }
 
-.user-dropdown-menu .logout:hover {
+.logout:hover {
   background: rgba(255, 80, 80, 0.2);
-  color: #ff9e8f;
+  color: #ffaaaa;
 }
 
 /* Улучшение иконок в dropdown (если они загружаются через Icon) */
@@ -338,6 +333,15 @@ textarea {
   height: 18px;
   opacity: 0.8;
   transition: opacity 0.2s;
+}
+.user-menu-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.user-menu-icons .btn-outline {
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
 }
 
 .user-dropdown-menu .dropdown-item:hover svg,
@@ -360,6 +364,23 @@ textarea {
 }
 [data-theme="light"] .user-dropdown-menu .dropdown-divider {
   background: rgba(0, 0, 0, 0.1);
+}
+
+/* На мобильных устройствах корректируем позиционирование */
+@media (max-width: 640px) {
+  .user-dropdown-menu {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 20px 20px 0 0;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .user-dropdown-trigger .user-greeting {
+    display: inline-block; /* показать имя на мобильных? лучше скрыть для экономии места */
+  }
 }
 
 /* Гарантируем, что search bar не перекрывает dropdown */
