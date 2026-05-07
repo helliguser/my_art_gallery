@@ -42,9 +42,7 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       if (!error) {
         setLikes(prev => prev - 1);
         setUserLiked(false);
-        if (buttonRef.current) {
-          animate(buttonRef.current, { scale: [1.2, 1], duration: 200 });
-        }
+        if (buttonRef.current) animate(buttonRef.current, { scale: [1.2, 1], duration: 200 });
       }
     } else {
       const { error } = await supabase
@@ -70,7 +68,7 @@ export default function LikeButton({ postId, initialLikes }: { postId: number; i
       style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
     >
       <LikeIcon filled={userLiked} size={18} />
-      <span style={{ fontSize: '0.9rem' }}>{likes}</span>
+      <span>{likes}</span>
     </button>
   );
 }

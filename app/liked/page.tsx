@@ -19,7 +19,7 @@ export default function LikedPage() {
         .from('likes')
         .select('post_id')
         .eq('user_id', session.user.id);
-      if (!likes?.length) {
+      if (!likes || likes.length === 0) {
         setLoading(false);
         return;
       }
@@ -41,7 +41,7 @@ export default function LikedPage() {
     <div className="container">
       <h1>Liked Artworks</h1>
       {posts.length === 0 ? (
-        <p>No liked posts yet.</p>
+        <p>You haven't liked any posts yet.</p>
       ) : (
         <div className="gallery">
           {posts.map(post => (

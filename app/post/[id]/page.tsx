@@ -11,6 +11,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const supabase = await createClient();
 
+  // Увеличиваем просмотры
   await supabase.rpc('increment_post_views', { post_id: parseInt(id) });
 
   const { data: post, error } = await supabase
