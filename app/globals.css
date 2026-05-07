@@ -52,15 +52,14 @@ body {
 }
 
 .logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Убираем все прежние стили, связанные с текстом (background-clip, gradient и т.д.) */
-}
-.logo img {
-  max-height: 40px;
-  width: auto;
-  display: block;
+  font-family: 'Playwrite DE SAS', cursive;
+  font-size: 2rem;
+  font-weight: 400;
+  background: linear-gradient(135deg, #fff, #9dc8ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  letter-spacing: 1px;
 }
 
 /* Базовые кнопки */
@@ -865,15 +864,16 @@ body {
 }
 .glass-search-field:focus-within {
   border-color: #4f9cff;
-  box-shadow: 0 0 0 2px rgba(79, 156, 255, 0.3);
-  background: rgba(30, 30, 40, 0.8);
+  box-shadow: 0 0 0 2px rgba(79,156,255,0.2);
+  background: rgba(30,30,40,0.7);
 }
 .glass-search-field input {
   background: transparent;
   border: none;
   outline: none;
   width: 100%;
-  color: white;
+  color: var(--text);
+  font-size: 0.95rem;
 }
 .glass-search-field input::placeholder {
   color: rgba(255,255,255,0.4);
@@ -889,18 +889,20 @@ body {
   margin-bottom: 1.5rem;
 }
 .glass-tag-chip {
-  background: rgba(79, 156, 255, 0.15);
+  background: rgba(79,156,255,0.15);
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(79, 156, 255, 0.3);
+  border: 1px solid rgba(79,156,255,0.3);
   border-radius: 40px;
   padding: 0.25rem 0.75rem;
   font-size: 0.8rem;
-  color: #9dc8ff;
+  color: #4f9cff;
   cursor: pointer;
+  transition: 0.2s;
 }
 .glass-tag-chip:hover {
   background: #4f9cff;
   color: white;
+  transform: translateY(-1px);
 }
 .tag-count {
   margin-left: 0.25rem;
@@ -918,12 +920,14 @@ body {
   backdrop-filter: blur(12px);
   border-radius: 20px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.25s, box-shadow 0.3s;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: transform 0.25s ease, box-shadow 0.3s ease;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 .glass-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.4);
+  transform: translateY(-6px);
+  box-shadow: 0 18px 30px -8px rgba(0,0,0,0.3);
+  background: rgba(30,30,40,0.7);
 }
 .glass-card-img {
   width: 100%;
@@ -1060,5 +1064,161 @@ body {
   .glass-post-meta {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+/* ========== GLOBAL STICKY HEADER ========== */
+.global-header {
+  position: sticky;
+  top: 0;
+  z-index: 110;
+  background: rgba(18, 20, 28, 0.65);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.25s ease;
+}
+
+.global-header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.9rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.global-header-left {
+  flex: 0 0 auto;
+}
+.global-header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+.global-header-right {
+  flex: 0 0 auto;
+}
+
+/* Навигационные кнопки (Upload / Trending) */
+.nav-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 60px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f0f0f0;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.nav-action:hover {
+  background: rgba(79, 156, 255, 0.2);
+  border-color: rgba(79, 156, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Увеличенный логотип (если нужно, можно в компоненте Logo) */
+.logo img {
+  max-height: 45px;
+  width: auto;
+}
+
+/* Улучшенные карточки */
+.glass-card {
+  background: rgba(28, 32, 40, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.3s ease;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+.glass-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(79, 156, 255, 0.2);
+}
+.glass-card-img {
+  transition: transform 0.4s ease;
+}
+.glass-card:hover .glass-card-img {
+  transform: scale(1.02);
+}
+.glass-card-content {
+  padding: 0.9rem;
+}
+.glass-card-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+}
+.glass-card-author {
+  font-size: 0.75rem;
+  margin-top: 0.2rem;
+}
+
+/* Увеличенные популярные теги */
+.glass-tag-chip {
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  background: rgba(79, 156, 255, 0.08);
+  border-color: rgba(79, 156, 255, 0.2);
+}
+.glass-tag-chip:hover {
+  background: #4f9cff;
+  transform: translateY(-2px);
+}
+
+/* Отступы и воздух */
+.glass-container {
+  padding-top: 0.5rem;
+}
+.glass-filters {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.glass-search-wrapper {
+  margin-bottom: 2rem;
+}
+.post-page {
+  margin-top: 1rem;
+}
+
+/* Правый блок меню – увеличенные отступы */
+.user-menu {
+  gap: 1.2rem;
+}
+.user-dropdown-trigger {
+  padding: 0.35rem 0.8rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 60px;
+}
+.user-greeting {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Адаптивность */
+@media (max-width: 860px) {
+  .global-header-center .nav-action span {
+    display: none;
+  }
+  .global-header-center .nav-action {
+    padding: 0.5rem;
+  }
+  .global-header-inner {
+    padding: 0.7rem 1rem;
+  }
+}
+@media (max-width: 640px) {
+  .global-header-center {
+    gap: 0.5rem;
+  }
+  .logo img {
+    max-height: 32px;
+  }
+  .user-greeting {
+    display: none;
   }
 }

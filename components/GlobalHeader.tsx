@@ -7,17 +7,25 @@ import Icon from './Icon';
 
 export default function GlobalHeader() {
   return (
-    <div className="glass-header">
-      <Logo />
-      <div className="navbar-actions">
-        <Link href="/upload" className="glass-small-btn">
-          <Icon name="Download" folder="interface" size={14} /> Upload
-        </Link>
-        <Link href="/trending" className="glass-small-btn">
-          <Icon name="Trending_Up" folder="interface" size={14} /> Trending
-        </Link>
+    <header className="global-header">
+      <div className="global-header-inner">
+        <div className="global-header-left">
+          <Logo width={160} height={45} />
+        </div>
+        <div className="global-header-center">
+          <Link href="/upload" className="nav-action">
+            <Icon name="Download" folder="interface" size={18} />
+            <span>Upload</span>
+          </Link>
+          <Link href="/trending" className="nav-action">
+            <Icon name="Trending_Up" folder="interface" size={18} />
+            <span>Trending</span>
+          </Link>
+        </div>
+        <div className="global-header-right">
+          <UserMenu />
+        </div>
       </div>
-      <UserMenu />
-    </div>
+    </header>
   );
 }
