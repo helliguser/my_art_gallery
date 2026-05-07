@@ -1,7 +1,9 @@
+import Icon from './Icon';
+
 interface AvatarProps {
   url?: string | null;
   size?: number;
-  name?: string; // ← добавляем
+  name?: string;
 }
 
 export default function Avatar({ url, size = 40, name }: AvatarProps) {
@@ -13,16 +15,16 @@ export default function Avatar({ url, size = 40, name }: AvatarProps) {
           width: size,
           height: size,
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #0070f3, #00c6ff)',
+          background: 'rgba(79, 156, 255, 0.2)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: size * 0.4,
-          color: 'white',
+          color: '#4f9cff',
           fontWeight: 'bold',
         }}
       >
-        {initial}
+        <Icon name="User_01" folder="user" size={size * 0.6} />
       </div>
     );
   }

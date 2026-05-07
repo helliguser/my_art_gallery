@@ -1,6 +1,6 @@
 interface IconProps {
-  name: string;
-  folder?: 'arrow' | 'interface';
+  name: string;      // имя файла без расширения, например "User_01"
+  folder?: 'interface' | 'arrow' | 'user' | 'menu'; // по умолчанию 'interface'
   size?: number;
   className?: string;
 }

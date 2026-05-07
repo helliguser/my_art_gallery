@@ -98,10 +98,10 @@ export default function UserMenu() {
       {isOpen && (
         <div className="user-dropdown-menu" ref={menuRef}>
           <Link href="/profile" className="dropdown-item" onClick={() => setIsOpen(false)}>
-            <Icon name="User" folder="interface" size={16} /> Profile
+            <Icon name="User_01" folder="user" size={16} /> Profile
           </Link>
           <Link href="/my-posts" className="dropdown-item" onClick={() => setIsOpen(false)}>
-            <Icon name="Image" folder="interface" size={16} /> My Posts
+            <Icon name="Menu_Alt_03" folder="menu" size={16} /> My Posts
           </Link>
           <Link href="/liked" className="dropdown-item" onClick={() => setIsOpen(false)}>
             <Icon name="Heart_01" folder="interface" size={16} /> Liked
